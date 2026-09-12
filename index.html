@@ -1,0 +1,3254 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>麻雀ドリル</title>
+<style>
+  :root{
+    --felt:#31604b; --felt2:#22422f; --felt-in:#2a5541;
+    --card:#fbf9f3; --sub:#efece2; --line:#ddd7c6; --hair:#efe9d9;
+    --fg:#22221f; --fg2:#5f5c53; --fg3:#8d8a80;
+    --ok:#2f7d4f; --ok-bg:#e6f2ea; --warn:#b3701a; --warn-bg:#f9f0dc; --bad:#b03a2a; --bad-bg:#f9eae6;
+    --accent:#1f5fa0;
+    --mincho:"Yu Mincho","YuMincho","Hiragino Mincho ProN","MS Mincho",serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --felt:#1a3125; --felt2:#0e1a13; --felt-in:#172c21;
+      --card:#282720; --sub:#33322a; --line:#454338; --hair:#3a3930;
+      --fg:#f2f0e9; --fg2:#bcb8ac; --fg3:#8e8a7f;
+      --ok:#7cc79a; --ok-bg:#24402f; --warn:#e5b061; --warn-bg:#3f3622; --bad:#ea9382; --bad-bg:#412823; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;color:var(--fg);
+    background:
+      radial-gradient(130% 95% at 50% -10%, rgba(255,255,255,.12), transparent 62%),
+      linear-gradient(165deg, var(--felt) 0%, var(--felt2) 100%);
+    background-attachment:fixed;
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+    font-size:17px;line-height:1.75;-webkit-text-size-adjust:100%}
+  .wrap{max-width:940px;margin:0 auto;padding:30px 16px 76px}
+  .card{background:var(--card);border-radius:20px;padding:28px 30px 30px;
+    box-shadow:0 14px 40px rgba(0,0,0,.26), 0 2px 8px rgba(0,0,0,.16),
+      inset 0 0 0 1px rgba(255,255,255,.5)}
+  @media (prefers-color-scheme: dark){ .card{box-shadow:0 14px 40px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.05)} }
+  h1{font-family:var(--mincho);font-size:27px;font-weight:600;margin:0 0 10px;letter-spacing:.06em}
+  .muted{color:var(--fg2)}
+  .small{font-size:14.5px}
+  .row{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end}
+  .row.hand{flex-wrap:nowrap;gap:4px;justify-content:center}
+  .tile-svg{display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+  /* 牌は卓の上に置く。牌が浮いて並んでいるだけの絵にしない */
+  .rack{background:var(--felt-in);border-radius:13px;padding:15px 15px 13px;
+    box-shadow:inset 0 3px 9px rgba(0,0,0,.35), inset 0 -2px 0 rgba(255,255,255,.07)}
+  .rack.thin{padding:11px 12px 10px}
+  .racklabel{font-size:14px;color:var(--fg2);margin:0 0 6px 2px}
+  .river{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+  .tilebtn{background:none;border:none;padding:0;margin:0;cursor:pointer;border-radius:7px;
+    transition:transform .13s cubic-bezier(.2,.8,.3,1)}
+  .tilebtn:hover{transform:translateY(-9px)}
+  .tilebtn:active{transform:translateY(-3px)}
+  .tilebtn:focus-visible{outline:3px solid #f0c86a;outline-offset:3px}
+  button.act{font:inherit;font-size:18px;padding:14px 32px;border-radius:12px;
+    border:1px solid var(--line);background:var(--sub);color:var(--fg);cursor:pointer;
+    transition:filter .12s, transform .12s}
+  button.act.primary{background:#26261f;color:#fbf9f3;border-color:#26261f;letter-spacing:.06em}
+  @media (prefers-color-scheme: dark){ button.act.primary{background:#f2f0e9;color:#1d1c17;border-color:#f2f0e9} }
+  button.act:hover{filter:brightness(1.06)}
+  button.act:active{transform:translateY(1px)}
+  button.act.sm{font-size:15px;padding:10px 20px}
+  .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;
+    padding-bottom:12px;border-bottom:1px solid var(--hair);
+    color:var(--fg2);font-size:15px;gap:12px;flex-wrap:wrap}
+  .dots{display:flex;gap:6px}
+  .dots i{width:9px;height:9px;border-radius:50%;background:var(--sub);display:block;
+    box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+  .verdict{font-family:var(--mincho);font-size:34px;font-weight:600;line-height:1.2;letter-spacing:.1em}
+  @keyframes rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+  .card{animation:rise .3s cubic-bezier(.2,.8,.3,1)}
+  @media (prefers-reduced-motion:reduce){ .card{animation:none} .tilebtn{transition:none} }
+  .scale{display:flex;gap:5px;margin:18px 0 24px;flex-wrap:wrap}
+  .scale div{flex:1;min-width:88px;text-align:center;font-size:14px;padding:10px 4px;border-radius:10px;
+    background:var(--sub);color:var(--fg3)}
+  .cmp{display:flex;align-items:center;gap:12px;margin-bottom:11px}
+  .cmp .lab{font-size:14.5px;color:var(--fg2);width:106px;flex:none;line-height:1.35}
+  .cmp .track{flex:1;height:26px;background:var(--sub);border-radius:6px;overflow:hidden;min-width:0}
+  .cmp .fill{height:100%;border-radius:6px}
+  .cmp .num{font-size:19px;font-weight:600;width:78px;text-align:right;flex:none}
+  .sect{font-size:15px;color:var(--fg2);margin:26px 0 11px}
+  .callout{border-radius:12px;padding:14px 16px;margin-top:13px;font-size:15.5px;line-height:1.7}
+  .callout.bad{background:var(--bad-bg)}
+  .callout.ok{background:var(--ok-bg)}
+  .callout.warn{background:var(--warn-bg)}
+  .statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:20px 0}
+  .stat{background:var(--sub);border-radius:13px;padding:15px 17px}
+  .stat .k{font-size:14px;color:var(--fg2);line-height:1.5}
+  .stat .v{font-size:29px;font-weight:600}
+  .note{font-size:14.5px;color:var(--fg3);margin-top:18px}
+  .tag{display:inline-block;font-size:13px;border-radius:999px;padding:3px 11px;margin:0 5px 5px 0}
+  .tag.safe{background:var(--ok-bg);color:var(--ok)}
+  .tag.danger{background:var(--bad-bg);color:var(--bad)}
+  .tag.mid{background:var(--sub);color:var(--fg2)}
+  /* 見えている枚数のバッジ（3枚以上）。4枚＝壁、3枚＝ワンチャンス */
+  .badge{position:absolute;top:-6px;right:-6px;min-width:19px;height:19px;border-radius:999px;
+    background:#5b3fa6;color:#fff;font-size:11.5px;font-weight:700;line-height:19px;text-align:center;
+    box-shadow:0 1px 3px rgba(0,0,0,.35);padding:0 4px;pointer-events:none}
+  .badge.wall{background:#b3392a}
+  .shape{display:flex;align-items:center;gap:9px;margin-bottom:8px;flex-wrap:wrap}
+  .shape .arrow{color:var(--fg3);font-size:13px}
+  .hero{text-align:center}
+  .hero .title{font-family:var(--mincho);font-size:42px;font-weight:600;letter-spacing:.34em;
+    margin:24px 0 6px;text-indent:.34em;line-height:1.2}
+  .hero .sub{font-size:16px;color:var(--fg2);letter-spacing:.04em}
+  .course{display:flex;align-items:center;gap:18px;background:var(--sub);border-radius:14px;
+    padding:18px 20px;margin-top:12px;border:1px solid transparent}
+  .course.live{background:var(--card);border-color:var(--line);box-shadow:0 3px 12px rgba(0,0,0,.08)}
+  .course.dim{opacity:.6}
+  .course .body{flex:1;min-width:0}
+  .course .name{font-family:var(--mincho);font-size:20px;font-weight:600;letter-spacing:.1em}
+  .course .desc{font-size:14.5px;color:var(--fg2);line-height:1.6;margin-top:2px}
+  .course .soon{font-size:13px;color:var(--fg3);border:1px solid var(--line);
+    border-radius:999px;padding:4px 13px;white-space:nowrap}
+  .lastrun{margin-top:24px;padding-top:16px;border-top:1px solid var(--hair);
+    font-size:14.5px;color:var(--fg2);display:flex;gap:20px;flex-wrap:wrap}
+  .lastrun b{color:var(--fg);font-size:16px}
+  .calc{text-align:center;padding:60px 0;color:var(--fg2);font-size:17px}
+  .nav{display:flex;gap:8px;align-items:center;margin:0 0 12px;font-size:14px}
+  .nav button{font:inherit;font-size:14px;padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.28);
+    background:rgba(255,255,255,.10);color:#f4f2ea;cursor:pointer}
+  .nav button:disabled{opacity:.35;cursor:default}
+  .nav .spacer{flex:1}
+  .nav .hint{color:rgba(255,255,255,.7);font-size:13px}
+  .readonly .card{pointer-events:none}
+  .readonly .card::after{content:"";}
+  .scale button{font:inherit;width:100%;border:none;background:none;color:inherit;cursor:pointer;padding:0}
+  .stancelist{background:var(--sub);border-radius:12px;padding:12px 14px;margin:-12px 0 18px}
+  /* ★スマホ。牌が小さくなりすぎる前に手牌を2段へ折る（handLayout が判断する） */
+  @media (max-width:560px){
+    body{font-size:16px;line-height:1.7}
+    .wrap{padding:16px 10px 60px}
+    .card{padding:18px 16px 22px;border-radius:16px}
+    .rack{padding:10px 10px 9px}
+    .rack.thin{padding:8px 8px 7px}
+    h1{font-size:22px}
+    .hero .title{font-size:31px;letter-spacing:.2em;text-indent:.2em;margin:18px 0 4px}
+    .hero .sub{font-size:14.5px}
+    .verdict{font-size:26px;letter-spacing:.06em}
+    .course{flex-direction:column;align-items:stretch;gap:12px;padding:16px}
+    .course .soon{align-self:flex-start}
+    button.act{width:100%;font-size:17px;padding:15px 20px}
+    button.act.sm{width:auto;font-size:14px;padding:9px 16px}
+    .scale{gap:4px}
+    .scale div{min-width:0;font-size:12px;padding:8px 2px}
+    .cmp{gap:8px}
+    .cmp .lab{width:70px;font-size:12.5px}
+    .cmp .num{width:62px;font-size:16px}
+    .sect{margin:20px 0 9px}
+    .callout{font-size:14.5px;padding:12px 13px}
+    .shape{gap:6px}
+    .stat .v{font-size:24px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script id="mod-engine">
+// 牌効率エンジン — シャンテン数と受け入れ計算
+// 牌インデックス: 0-8=1m..9m, 9-17=1p..9p, 18-26=1s..9s, 27-33=東南西北白發中
+// UIから完全に独立。DOMに触れない。
+
+(function (root) {
+  'use strict';
+
+  var T = 34;
+  var HONOR_START = 27;
+  var YAOCHU = [0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32, 33];
+
+  var SUIT_CH = ['m', 'p', 's'];
+  var HONOR_NAME = ['東', '南', '西', '北', '白', '發', '中'];
+
+  function tileName(i) {
+    if (i >= HONOR_START) return HONOR_NAME[i - HONOR_START];
+    return (i % 9 + 1) + SUIT_CH[Math.floor(i / 9)];
+  }
+
+  function parseHand(str) {
+    // "123m456p789s1122z" 形式。z は 1=東..7=中
+    var c = new Array(T).fill(0);
+    var buf = [];
+    for (var k = 0; k < str.length; k++) {
+      var ch = str[k];
+      if (ch >= '1' && ch <= '9') { buf.push(+ch); continue; }
+      var base = ch === 'm' ? 0 : ch === 'p' ? 9 : ch === 's' ? 18 : ch === 'z' ? 27 : -1;
+      if (base < 0) continue;
+      for (var j = 0; j < buf.length; j++) c[base + buf[j] - 1]++;
+      buf = [];
+    }
+    return c;
+  }
+
+  function handToString(c) {
+    var out = '';
+    for (var s = 0; s < 3; s++) {
+      var part = '';
+      for (var n = 0; n < 9; n++) for (var k = 0; k < c[s * 9 + n]; k++) part += (n + 1);
+      if (part) out += part + SUIT_CH[s];
+    }
+    var z = '';
+    for (var h = 0; h < 7; h++) for (var k2 = 0; k2 < c[HONOR_START + h]; k2++) z += (h + 1);
+    if (z) out += z + 'z';
+    return out;
+  }
+
+  function total(c) {
+    var t = 0;
+    for (var i = 0; i < T; i++) t += c[i];
+    return t;
+  }
+
+  // --- シャンテン数 ---
+
+  // ★面子と搭子の合計は、雀頭ありなら4、なしなら5まで。それを超えた搭子は数えない。
+  //   探索の途中で「搭子を4つ → その後に面子」と積むと上限をすり抜けるため、ここで必ず切り詰める。
+  //   （2026-09-11 「1索を残すと2索・3索が有効」と数えた事故。搭子3つの手に4つ目の搭子を足しても手は進まない）
+  function evalS(melds, partials, hasHead) {
+    var cap = hasHead ? 4 : 5;
+    if (melds + partials > cap) partials = Math.max(0, cap - melds);
+    var s = 8 - 2 * melds - partials - (hasHead ? 1 : 0);
+    if (!hasHead && melds + partials === 5) s += 1;
+    return s;
+  }
+
+  function search(c, i, melds, partials, hasHead) {
+    while (i < T && c[i] === 0) i++;
+    if (i >= T) return evalS(melds, partials, hasHead);
+
+    var best = 99;
+    var cap = hasHead ? 4 : 5;
+    var isSuit = i < HONOR_START;
+    var n = isSuit ? i % 9 : -1;
+
+    if (c[i] >= 3) {
+      c[i] -= 3;
+      best = Math.min(best, search(c, i, melds + 1, partials, hasHead));
+      c[i] += 3;
+    }
+    if (isSuit && n <= 6 && c[i + 1] > 0 && c[i + 2] > 0) {
+      c[i]--; c[i + 1]--; c[i + 2]--;
+      best = Math.min(best, search(c, i, melds + 1, partials, hasHead));
+      c[i]++; c[i + 1]++; c[i + 2]++;
+    }
+    if (melds + partials < cap) {
+      if (c[i] >= 2) {
+        c[i] -= 2;
+        best = Math.min(best, search(c, i, melds, partials + 1, hasHead));
+        c[i] += 2;
+      }
+      if (isSuit && n <= 7 && c[i + 1] > 0) {
+        c[i]--; c[i + 1]--;
+        best = Math.min(best, search(c, i, melds, partials + 1, hasHead));
+        c[i]++; c[i + 1]++;
+      }
+      if (isSuit && n <= 6 && c[i + 2] > 0) {
+        c[i]--; c[i + 2]--;
+        best = Math.min(best, search(c, i, melds, partials + 1, hasHead));
+        c[i]++; c[i + 2]++;
+      }
+    }
+    c[i]--;
+    best = Math.min(best, search(c, i, melds, partials, hasHead));
+    c[i]++;
+    return best;
+  }
+
+  function shantenNormal(c) {
+    var best = search(c, 0, 0, 0, false);
+    for (var i = 0; i < T; i++) {
+      if (c[i] >= 2) {
+        c[i] -= 2;
+        best = Math.min(best, search(c, 0, 0, 0, true));
+        c[i] += 2;
+      }
+    }
+    return best;
+  }
+
+  function shantenChiitoi(c) {
+    var pairs = 0, kinds = 0;
+    for (var i = 0; i < T; i++) {
+      if (c[i] > 0) kinds++;
+      if (c[i] >= 2) pairs++;
+    }
+    var s = 6 - pairs;
+    if (kinds < 7) s += 7 - kinds;
+    return s;
+  }
+
+  function shantenKokushi(c) {
+    var kinds = 0, hasPair = 0;
+    for (var k = 0; k < YAOCHU.length; k++) {
+      var i = YAOCHU[k];
+      if (c[i] > 0) kinds++;
+      if (c[i] >= 2) hasPair = 1;
+    }
+    return 13 - kinds - hasPair;
+  }
+
+  var cache = new Map();
+
+  function shanten(c) {
+    var key = c.join(',');
+    var hit = cache.get(key);
+    if (hit !== undefined) return hit;
+    var v = Math.min(shantenNormal(c), shantenChiitoi(c), shantenKokushi(c));
+    if (cache.size > 200000) cache.clear();
+    cache.set(key, v);
+    return v;
+  }
+
+  // --- 受け入れ ---
+
+  // 13枚の手に対し、シャンテンを進める牌とその残り枚数を返す
+  // visible: 場に見えている枚数（省略時は手牌のみ）
+  function ukeire(c, visible) {
+    var base = shanten(c);
+    var tiles = [];
+    var count = 0;
+    for (var t = 0; t < T; t++) {
+      var used = (visible ? visible[t] : 0) + c[t];
+      if (used >= 4) continue;
+      c[t]++;
+      var s = shanten(c);
+      c[t]--;
+      if (s < base) {
+        var left = 4 - used;
+        tiles.push({ tile: t, left: left });
+        count += left;
+      }
+    }
+    return { shanten: base, tiles: tiles, count: count };
+  }
+
+  // 14枚の手に対し、打牌候補ごとの結果を返す。良い順にソート済み
+  function analyzeDiscards(c14, visible) {
+    var out = [];
+    for (var d = 0; d < T; d++) {
+      if (c14[d] === 0) continue;
+      c14[d]--;
+      var r = ukeire(c14, visible);
+      c14[d]++;
+      out.push({ discard: d, shanten: r.shanten, count: r.count, tiles: r.tiles });
+    }
+    out.sort(function (a, b) {
+      if (a.shanten !== b.shanten) return a.shanten - b.shanten;
+      if (a.count !== b.count) return b.count - a.count;
+      return a.discard - b.discard;
+    });
+    return out;
+  }
+
+  // ★評価の中で使う軽い版（2026-09-12）。シャンテンが最小になる打牌だけ受け入れを数える。
+  //   シャンテンが増える打牌は状態価値で最善になり得ない（段差が枚数の項より必ず大きい）ので、
+  //   先にシャンテンだけ見て絞る。1問あたりの計算が約4割減る
+  function analyzeBestDiscards(c14, visible) {
+    var minS = 99, ss = [];
+    for (var d = 0; d < T; d++) {
+      if (c14[d] === 0) continue;
+      c14[d]--;
+      var s = shanten(c14);
+      c14[d]++;
+      ss.push({ d: d, s: s });
+      if (s < minS) minS = s;
+    }
+    var out = [];
+    for (var i = 0; i < ss.length; i++) {
+      if (ss[i].s !== minS) continue;
+      c14[ss[i].d]--;
+      var r = ukeire(c14, visible);
+      c14[ss[i].d]++;
+      out.push({ discard: ss[i].d, shanten: r.shanten, count: r.count, tiles: r.tiles });
+    }
+    out.sort(function (a, b) {
+      if (a.count !== b.count) return b.count - a.count;
+      return a.discard - b.discard;
+    });
+    return out;
+  }
+
+  // ---------- 手の価値（ツモった後の状態を点数にする） ----------
+  // ★2026-09-11 導入。「進むツモ」だけ数えると、五萬が両面になって索子のカンチャンと入れ替わる、
+  //   といった「進まないが良くなる変化」が0点になる。ツモった後の状態そのものに点を付ければ、両方が同じ物差しに乗る。
+  //
+  //   V(シャンテン s, 受け入れ n) = 1000 / 2^s + n × 10 / 2^s
+  //     聴牌: 1000 + 待ち枚数×10 ／ 1シャンテン: 500 + n×5 ／ 2シャンテン: 250 + n×2.5 ／ 3: 125 + n×1.25
+  //   段差（1000/2^s）は、同シャンテン内の最大の改善（n≈80 → 200点）より大きく取り、
+  //   「シャンテンが進む」ことが「形が良くなる」より必ず上に来るようにしてある。
+  //   ★これは手書きの重みなので、置いた数字はここに固定し、変えるときは docs/decisions.md に理由を残す。
+  var VALUE_BASE = 1000, VALUE_PER_TILE = 10;
+  function stateValue(shanten, count) {
+    if (shanten < 0) return VALUE_BASE * 4;              // 和了
+    var d = Math.pow(2, shanten);
+    return VALUE_BASE / d + count * VALUE_PER_TILE / d;
+  }
+
+  // 13枚の手について、全34種のツモそれぞれで「最善打の後の状態価値」を求め、残り枚数で重み付けして平均する。
+  // 進むツモ（受け入れ）と、進まないが良くなるツモ（改善）を分けて返す
+  function evaluate(c13, visible, wantDetail) {
+    var uk = ukeire(c13, visible);
+    var accept = new Array(T).fill(0);
+    for (var i = 0; i < uk.tiles.length; i++) accept[uk.tiles[i].tile] = 1;
+    var baseV = stateValue(uk.shanten, uk.count);
+    var total = 0, weight = 0;
+    var advTotal = 0, advW = 0, impTotal = 0, impW = 0;
+    var advDetail = [], impDetail = [];
+    for (var t = 0; t < T; t++) {
+      var left = 4 - c13[t] - (visible ? visible[t] : 0);
+      if (left <= 0) continue;
+      c13[t]++;
+      var a = analyzeBestDiscards(c13, visible);
+      c13[t]--;
+      // 最善打 = 状態価値が最大の打牌
+      var best = a[0], bestV = -1;
+      for (var k = 0; k < a.length; k++) {
+        var v = stateValue(a[k].shanten, a[k].count);
+        if (v > bestV) { bestV = v; best = a[k]; }
+      }
+      total += left * bestV;
+      weight += left;
+      if (accept[t]) {
+        advTotal += left * best.count; advW += left;
+        if (wantDetail) advDetail.push({ draw: t, left: left, thenDiscard: best.discard, next: best.count, nextShanten: best.shanten });
+      } else if (best.shanten === uk.shanten && best.count > uk.count) {
+        impTotal += left * (best.count - uk.count); impW += left;
+        if (wantDetail) impDetail.push({ draw: t, left: left, thenDiscard: best.discard, from: uk.count, to: best.count });
+      }
+    }
+    return {
+      shanten: uk.shanten, count: uk.count,
+      value: weight ? total / weight : baseV,        // ★これが打牌の点数
+      avgNext: advW ? advTotal / advW : 0,           // 進むツモの後の受け入れ（平均）
+      improveTiles: impW,                            // 進まないが良くなるツモの枚数
+      improveGain: impW ? impTotal / impW : 0,       // その平均の広がり
+      advDetail: advDetail, improveDetail: impDetail
+    };
+  }
+
+  // ---------- 2手先の受け入れ ----------
+  // ★受け入れ枚数だけでは待ちの甲乙（両面かカンチャンか）が見えない（2026-09-11 指摘）。
+  //   13枚の手について、受け入れ牌をツモった後の「最善打の受け入れ」を、残り枚数で重み付けして足す。
+  //   1シャンテンなら、聴牌したときの待ちの枚数そのもの（両面8枚・カンチャン4枚）。
+  //   ★横の変化も数える（2026-09-11）。シャンテンは進まないが受け入れが広がるツモ
+  //   （カンチャンが両面に置き換わる等）は、増えた分だけ加点する。
+  //   score = Σ(進むツモ: 残り枚数 × その後の受け入れ) + Σ(進まないツモ: 残り枚数 × 増えた受け入れ)
+  function lookahead(c13, visible, wantDetail) {
+    var uk = ukeire(c13, visible);
+    var total = 0, weight = 0, side = 0, detail = [], t;
+    var accept = new Array(T).fill(0);
+    for (var i = 0; i < uk.tiles.length; i++) accept[uk.tiles[i].tile] = 1;
+    for (t = 0; t < T; t++) {
+      var left = 4 - c13[t] - (visible ? visible[t] : 0);
+      if (left <= 0) continue;
+      if (!accept[t] && !wantDetail) continue;   // 横の変化は点数に入れないので、詳細が要るときだけ数える
+      c13[t]++;
+      var a = analyzeDiscards(c13, visible);
+      c13[t]--;
+      var best = a[0];
+      if (accept[t]) {
+        total += left * best.count;
+        weight += left;
+        if (wantDetail) detail.push({ draw: t, left: left, thenDiscard: best.discard, next: best.count, nextShanten: best.shanten, advance: true });
+      } else if (best.shanten === uk.shanten && best.count > uk.count) {
+        side += left * (best.count - uk.count);
+        if (wantDetail) detail.push({ draw: t, left: left, thenDiscard: best.discard, next: best.count, nextShanten: best.shanten, advance: false });
+      }
+    }
+    // ★score は「進むツモ」だけで決める。横の変化（side）は参考値として返すが、点数には入れない。
+    //   入れると順位が不安定になった（25問中22問で計算対象外の牌が最善を上回る）。2026-09-11
+    return { shanten: uk.shanten, count: uk.count, score: total, advScore: total, sideScore: side,
+             avgNext: weight ? total / weight : 0, detail: detail };
+  }
+
+  // 14枚の手について、同じシャンテンを保てる上位 topK の打牌に2手先の評価を付ける。
+  // 戻り値は analyzeDiscards の配列に next(score, avgNext) を足したもの。best2 が2手先で最善の打牌
+  // withinCount: 1手先の受け入れが最善からこの枚数以内の打牌だけ2手先を見る（それ以下は逆転しない）
+  function analyzeDiscards2(c14, visible, topK, withinCount) {
+    var a = analyzeDiscards(c14, visible);
+    if (!a.length) return { analysis: a, best2: null };
+    var top = a[0].shanten, topCount = a[0].count;
+    var k = 0;
+    for (var i = 0; i < a.length && k < (topK || 5); i++) {
+      if (a[i].shanten !== top) continue;
+      if (withinCount !== undefined && topCount - a[i].count > withinCount) continue;
+      c14[a[i].discard]--;
+      var ev = evaluate(c14, visible);
+      c14[a[i].discard]++;
+      a[i].score2 = ev.value;
+      a[i].avgNext = ev.avgNext;
+      a[i].improveTiles = ev.improveTiles;
+      a[i].improveGain = ev.improveGain;
+      k++;
+    }
+    var cands = a.filter(function (x) { return x.score2 !== undefined; });
+    cands.sort(function (x, y) { return y.score2 - x.score2 || y.count - x.count || x.discard - y.discard; });
+    return { analysis: a, best2: cands[0], ranked2: cands };
+  }
+
+  var api = {
+    T: T,
+    lookahead: lookahead,
+    stateValue: stateValue,
+    evaluate: evaluate,
+    analyzeDiscards2: analyzeDiscards2,
+    tileName: tileName,
+    parseHand: parseHand,
+    handToString: handToString,
+    total: total,
+    shanten: shanten,
+    shantenNormal: shantenNormal,
+    shantenChiitoi: shantenChiitoi,
+    shantenKokushi: shantenKokushi,
+    ukeire: ukeire,
+    analyzeDiscards: analyzeDiscards
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.Engine = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script id="mod-tiles">
+// 牌のSVG生成 — 自作。外部素材・Unicode麻雀牌は使わない。
+// 牌面は常に象牙色（実物の牌と同じく、暗い背景でも明るい物体として描く）
+//
+// 配置の典拠: 麻雀牌 - Wikipedia https://ja.wikipedia.org/wiki/麻雀牌
+//   八索は上がW形・下がM形。二・三・四・六・八索は緑のみ（赤い棒は五索と七索）。一索は鳥。
+// 記憶で描かないこと。三索を筒子と同じ斜めに置いて一度間違えている。
+(function (root) {
+  'use strict';
+
+  var W = 40, H = 56;
+  var SIDE = '#ded7c3', FACE = '#faf7ee', LIP = '#ffffff', SHADE = '#e7e1cf', EDGE = '#bfb69c';
+  var INK = '#26261f', RED = '#b3392a', BLUE = '#1b5c9e', GREEN = '#2c7a4a';
+  var KANJI = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
+  var HONOR = ['東', '南', '西', '北', '白', '發', '中'];
+  var HONOR_COLOR = [INK, INK, INK, INK, BLUE, GREEN, RED];
+  var MINCHO = "'Yu Mincho','YuMincho','Hiragino Mincho ProN','MS Mincho',serif";
+
+  // ---------- 筒子 ----------
+
+  // { r: 半径, items: [[x, y, 行番号], ...], red: [赤にする行番号] }
+  // ★半径は必ず「隣との間隔 ÷ 2 − 余白」で決める。円を重ねない（九筒で一度重ねている）
+  // ★余白は上下左右をそろえる。面の内側は x 2.4〜37.6 / y 2.2〜53.2
+  function pinPlan(n) {
+    var P;
+    switch (n) {
+      case 2:
+        return { r: 6.4, items: [[20, 17, 0], [20, 39, 1]] };
+      // 三筒は左上から右下への斜め
+      case 3:
+        return { r: 5.6, items: [[10, 12, 0], [20, 28, 1], [30, 44, 2]] };
+      case 4:
+        return { r: 6.0, items: [[12.4, 17, 0], [27.6, 17, 0], [12.4, 39, 1], [27.6, 39, 1]] };
+      case 5:
+        return { r: 5.6, items: [[12.4, 14, 0], [27.6, 14, 0], [20, 28, 1], [12.4, 42, 2], [27.6, 42, 2]], red: [1] };
+      // ★六筒は3段2列。上の2つが緑、下の4つが赤（実物写真で確認 2026-09-11）
+      case 6:
+        return { r: 5.8, items: [[12.4, 12.5, 0], [27.6, 12.5, 0],
+                                 [12.4, 28, 1], [27.6, 28, 1], [12.4, 43.5, 2], [27.6, 43.5, 2]],
+                 rowColors: [GREEN, RED, RED] };
+      // ★七筒は上の3つが斜めに並び、赤。下の4つは2列2段
+      case 7:
+        return { r: 4.7, items: [[9.6, 10.5, 0], [20, 14, 0], [30.4, 17.5, 0],
+                                 [12.4, 33, 1], [27.6, 33, 1], [12.4, 46, 2], [27.6, 46, 2]], red: [0] };
+      case 8:
+        return { r: 4.8, items: [[12.4, 11, 0], [27.6, 11, 0], [12.4, 22.5, 1], [27.6, 22.5, 1],
+                                 [12.4, 34, 2], [27.6, 34, 2], [12.4, 45.5, 3], [27.6, 45.5, 3]] };
+      case 9:
+        P = [];
+        for (var r = 0; r < 3; r++) for (var i = 0; i < 3; i++) P.push([10 + i * 10, 13 + r * 15, r]);
+        return { r: 4.4, items: P };
+    }
+    return { r: 0, items: [] };
+  }
+
+  function ring(x, y, r, col) {
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + LIP + '" stroke="' + col + '" stroke-width="' + (r * 0.32).toFixed(2) + '"/>' +
+      '<circle cx="' + x + '" cy="' + y + '" r="' + (r * 0.42).toFixed(2) + '" fill="' + col + '"/>';
+  }
+
+  function pinzu(n) {
+    if (n === 1) {
+      return '<circle cx="20" cy="28" r="11.6" fill="' + LIP + '" stroke="' + BLUE + '" stroke-width="1.1"/>' +
+        '<circle cx="20" cy="28" r="9.4" fill="' + LIP + '" stroke="' + GREEN + '" stroke-width="2.6"/>' +
+        '<circle cx="20" cy="28" r="5.6" fill="' + LIP + '" stroke="' + BLUE + '" stroke-width="2.2"/>' +
+        '<circle cx="20" cy="28" r="2.6" fill="' + RED + '"/>';
+    }
+    // ★色は行ごとに揃える。1個ずつ交互に塗ると、並びが意図なく見える
+    var p = pinPlan(n), s = '';
+    for (var i = 0; i < p.items.length; i++) {
+      var it = p.items[i], r = it[2];
+      var col = p.rowColors ? p.rowColors[r]
+        : (p.red && p.red.indexOf(r) >= 0) ? RED : (r % 2 === 0 ? BLUE : GREEN);
+      s += ring(it[0], it[1], p.r, col);
+    }
+    return s;
+  }
+
+  // ---------- 索子 ----------
+
+  // [x, y, 回転角, 赤か]
+  function souLayout(n) {
+    switch (n) {
+      case 2: return [[20, 16], [20, 40]];
+      case 3: return [[20, 14], [12, 39], [28, 39]];
+      case 4: return [[13, 16], [27, 16], [13, 40], [27, 40]];
+      case 5: return [[13, 14], [27, 14], [20, 28, 0, 1], [13, 42], [27, 42]];
+      case 6: return [[11, 17], [20, 17], [29, 17], [11, 40], [20, 40], [29, 40]];
+      case 7: return [[20, 11, 0, 1], [11, 27], [20, 27], [29, 27], [11, 44], [20, 44], [29, 44]];
+      case 8: return [[10, 18, -26], [16.7, 18, 26], [23.3, 18, -26], [30, 18, 26],
+                      [10, 40, 26], [16.7, 40, -26], [23.3, 40, 26], [30, 40, -26]];
+      // 九索は中央の縦1列が赤
+      case 9: return [[10, 13], [20, 13, 0, 1], [30, 13], [10, 28], [20, 28, 0, 1], [30, 28], [10, 43], [20, 43, 0, 1], [30, 43]];
+    }
+    return [];
+  }
+
+  // 竹を1本。上下の節でくびれ、中央に節の帯が入る形
+  function bamboo(x, y, hw, hh, col, rot) {
+    var w = hw, h = hh;
+    var waist = w * 0.62;      // 節のところで細くなる
+    var band = w * 1.18;       // 節の帯は外へ張り出す
+    var by = h * 0.06;         // 帯の半分の高さ
+    var body =
+      '<path d="' +
+      'M' + (x - w) + ' ' + (y - h + w * 0.8) +
+      ' Q' + (x - w) + ' ' + (y - h) + ' ' + (x - w * 0.4) + ' ' + (y - h) +
+      ' L' + (x + w * 0.4) + ' ' + (y - h) +
+      ' Q' + (x + w) + ' ' + (y - h) + ' ' + (x + w) + ' ' + (y - h + w * 0.8) +
+      ' L' + (x + waist) + ' ' + (y - by * 2.2) +
+      ' L' + (x + waist) + ' ' + (y + by * 2.2) +
+      ' L' + (x + w) + ' ' + (y + h - w * 0.8) +
+      ' Q' + (x + w) + ' ' + (y + h) + ' ' + (x + w * 0.4) + ' ' + (y + h) +
+      ' L' + (x - w * 0.4) + ' ' + (y + h) +
+      ' Q' + (x - w) + ' ' + (y + h) + ' ' + (x - w) + ' ' + (y + h - w * 0.8) +
+      ' L' + (x - waist) + ' ' + (y + by * 2.2) +
+      ' L' + (x - waist) + ' ' + (y - by * 2.2) +
+      ' Z" fill="' + col + '"/>';
+    var knot = '<rect x="' + (x - band) + '" y="' + (y - by) + '" width="' + (band * 2) + '" height="' + (by * 2) + '" rx="' + by + '" fill="' + col + '"/>';
+    var g = body + knot;
+    return rot ? '<g transform="rotate(' + rot + ' ' + x + ' ' + y + ')">' + g + '</g>' : g;
+  }
+
+  function souzu(n) {
+    if (n === 1) {
+      // 一索は鳥（孔雀）
+      return '<g>' +
+        '<path d="M20 30 Q11 40 9.5 49 Q14 45 17.5 39" fill="' + GREEN + '"/>' +
+        '<path d="M20 30 Q29 40 30.5 49 Q26 45 22.5 39" fill="' + GREEN + '"/>' +
+        '<path d="M20 30 Q19 41 19.6 50 Q20.4 50 20.4 41 Z" fill="' + GREEN + '"/>' +
+        '<ellipse cx="20" cy="24" rx="7" ry="9.2" fill="' + GREEN + '"/>' +
+        '<ellipse cx="20" cy="24" rx="3.4" ry="5.2" fill="' + LIP + '" opacity=".45"/>' +
+        '<circle cx="19.4" cy="12.4" r="4.6" fill="' + GREEN + '"/>' +
+        '<circle cx="20.9" cy="11.6" r="1.25" fill="' + FACE + '"/>' +
+        '<path d="M23.6 12.6 L28.4 14.2 L23.6 15.8 Z" fill="' + RED + '"/>' +
+        '<path d="M17.6 8.2 Q19 4.4 21.2 7.6" stroke="' + RED + '" stroke-width="1.5" fill="none" stroke-linecap="round"/>' +
+        '</g>';
+    }
+    var pts = souLayout(n), s = '';
+    var hw = n >= 8 ? 2.35 : (n >= 6 ? 2.6 : 3.1);
+    var hh = n >= 8 ? 6.4 : (n === 7 ? 6.6 : (n >= 6 ? 7.6 : 8.6));
+    for (var i = 0; i < pts.length; i++) {
+      s += bamboo(pts[i][0], pts[i][1], hw, hh, pts[i][3] ? RED : GREEN, pts[i][2] || 0);
+    }
+    return s;
+  }
+
+  // ---------- 萬子・字牌 ----------
+
+  function manzu(n) {
+    return '<text x="20" y="26" font-size="21.5" text-anchor="middle" fill="' + INK + '" font-family=' + JSON.stringify(MINCHO) + '>' + KANJI[n - 1] + '</text>' +
+      '<text x="20" y="48.5" font-size="18" text-anchor="middle" fill="' + RED + '" font-family=' + JSON.stringify(MINCHO) + '>萬</text>';
+  }
+
+  function honor(i) {
+    // ★白は真っ白。文字も枠も描かない
+    if (i === 4) return '';
+    return '<text x="20" y="38.5" font-size="27" text-anchor="middle" fill="' + HONOR_COLOR[i] + '" font-family=' + JSON.stringify(MINCHO) + '>' + HONOR[i] + '</text>';
+  }
+
+  function face(idx) {
+    if (idx < 9) return manzu(idx + 1);
+    if (idx < 18) return pinzu(idx - 9 + 1);
+    if (idx < 27) return souzu(idx - 18 + 1);
+    return honor(idx - 27);
+  }
+
+  function tileLabel(idx) {
+    if (idx >= 27) return HONOR[idx - 27];
+    var n = idx % 9 + 1;
+    return n + (idx < 9 ? '萬' : idx < 18 ? '筒' : '索');
+  }
+
+  // opts: {size, state:'picked'|'best'|'worst'|'dim'}
+  function svg(idx, opts) {
+    opts = opts || {};
+    var size = opts.size || 1;
+    var w = Math.round(W * size), h = Math.round(H * size);
+    var ring = '';
+    if (opts.state === 'picked') ring = '<rect x="0.9" y="0.9" width="38.2" height="54.2" rx="5.4" fill="none" stroke="#d08a00" stroke-width="2.4"/>';
+    if (opts.state === 'best') ring = '<rect x="0.9" y="0.9" width="38.2" height="54.2" rx="5.4" fill="none" stroke="#2c7a4a" stroke-width="2.4"/>';
+    if (opts.state === 'worst') ring = '<rect x="0.9" y="0.9" width="38.2" height="54.2" rx="5.4" fill="none" stroke="#b3392a" stroke-width="2.4"/>';
+    return '<svg class="tile-svg' + (opts.state === 'dim' ? ' dim' : '') + '" width="' + w + '" height="' + h + '" viewBox="0 0 40 56" role="img" aria-label="' + tileLabel(idx) + '">' +
+      // 側面（牌の厚み）
+      '<rect x="0.6" y="0.6" width="38.8" height="54.8" rx="5.4" fill="' + SIDE + '" stroke="' + EDGE + '" stroke-width="0.8"/>' +
+      // 面（象牙のはめ込み）
+      '<rect x="2.4" y="2.2" width="35.2" height="51" rx="3.6" fill="' + FACE + '"/>' +
+      // 面のふち。左上に光、右下に影を置いて彫り込みに見せる
+      '<path d="M2.4 8 A3.6 3.6 0 0 1 6 2.2 L34 2.2" stroke="' + LIP + '" stroke-width="1.4" fill="none" stroke-linecap="round"/>' +
+      '<path d="M37.6 47 A3.6 3.6 0 0 1 34 53.2 L6 53.2" stroke="' + SHADE + '" stroke-width="1.4" fill="none" stroke-linecap="round"/>' +
+      face(idx) + ring + '</svg>';
+  }
+
+  var api = { svg: svg, label: tileLabel, W: W, H: H };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.Tiles = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script id="mod-drill">
+// 出題生成と判定 — UIから独立。DOMに触れない。node でテストできる。
+(function (root) {
+  'use strict';
+
+  var E = (typeof module !== 'undefined' && module.exports) ? require('./engine.js') : root.Engine;
+
+  // 判定の閾値。暫定値。実データで見直す
+  var LOSS_CLOSE = 4;
+  // ★2手先の広さ（score2）で見た最善との差。この割合以内なら「惜しい」
+  var REL_CLOSE = 0.12;
+  // 2手先で最善が2番目より、この割合は上回っていること（どちらでもよい問題を落とす）
+  var MIN_REL_MARGIN = 0.03;
+  var LOOKAHEAD_TOPK = 14, LOOKAHEAD_WITHIN = 12;  // 受け入れが最善から12枚以内の打牌だけ先を見る（形の改善で逆転しうる幅）
+
+  var MIN_SHANTEN = 1, MAX_SHANTEN = 3;
+
+  // ★難易度はシャンテン数ではなく「最善と2番目の差」で決める（2026-09-10 実測して確定）
+  //   1シャンテンだけを出していたときの差の中央値は12枚。答えが一目で割れていた。
+  //   差の範囲を絞ると、分布は自然に2〜3シャンテン寄りになる。
+  //   実測: 差2〜6・同シャンテン候補3枚以上 → 採用率5.5% / 分布 1:17 2:107 3:176 / 差 平均3.8枚
+  var MIN_MARGIN = 2, MAX_MARGIN = 6;
+
+  // 同じシャンテン数を保てる打牌がこの数以上あること。
+  // 1枚しかないと「それ以外は全部戻し」という別種の問題になる
+  var MIN_SAME_SHANTEN = 3;
+
+  // ★牌効率の問題に字牌は入れない（2026-09-11 指摘）。字牌は切るだけで、形の問題にならない
+  function dealHand(rnd) {
+    rnd = rnd || Math.random;
+    var wall = [];
+    for (var i = 0; i < 27; i++) for (var j = 0; j < 4; j++) wall.push(i);
+    for (var k = wall.length - 1; k > 0; k--) {
+      var r = (rnd() * (k + 1)) | 0;
+      var t = wall[k]; wall[k] = wall[r]; wall[r] = t;
+    }
+    var c = new Array(34).fill(0);
+    for (var n = 0; n < 14; n++) c[wall[n]]++;
+    return c;
+  }
+
+  // ★孤立牌: 1枚だけで、同色の±2以内に他の牌が無い。答えが孤立牌なら一目で割れる（2026-09-12 指摘）
+  //   実測: この条件を入れる前は 40問中27問（68%）の答えが孤立牌だった
+  function isIsolated(c, t) {
+    if (t >= 27 || c[t] !== 1) return false;
+    var s = (t / 9) | 0, n = t % 9;
+    for (var d = -2; d <= 2; d++) {
+      if (d === 0) continue;
+      var m = n + d;
+      if (m >= 0 && m <= 8 && c[s * 9 + m] > 0) return false;
+    }
+    return true;
+  }
+
+  function pairsOf(c) {
+    var p = 0;
+    for (var i = 0; i < 34; i++) if (c[i] >= 2) p++;
+    return p;
+  }
+
+  function makeQuestion(rnd) {
+    for (var attempt = 0; attempt < 6000; attempt++) {
+      var c = dealHand(rnd);
+      var sN = E.shantenNormal(c);
+      // 七対子・国士が最短になる手は出さない（説明が別体系になるため。仕様 原則5）
+      if (E.shantenChiitoi(c) < sN) continue;
+      if (E.shantenKokushi(c) < sN) continue;
+      if (pairsOf(c) >= 5) continue;
+
+      var a = E.analyzeDiscards(c);
+      if (a.length < 5) continue;
+      var best = a[0];
+      if (best.shanten < MIN_SHANTEN || best.shanten > MAX_SHANTEN) continue;
+
+      // 最善が一意であること
+      var tied = 0;
+      for (var j = 0; j < a.length; j++) {
+        if (a[j].shanten === best.shanten && a[j].count === best.count) tied++;
+      }
+      if (tied !== 1) continue;
+
+      // 同じシャンテン数を保てる打牌が複数あること
+      var same = a.filter(function (x) { return x.shanten === best.shanten; });
+      if (same.length < MIN_SAME_SHANTEN) continue;
+
+      // 2番目との差が MIN_MARGIN 〜 MAX_MARGIN に収まること。
+      // 下限は「どちらでもよい」を、上限は「一目で割れる」を落とすため
+      var second = null;
+      for (var i2 = 1; i2 < a.length; i2++) {
+        if (a[i2].shanten !== best.shanten || a[i2].count !== best.count) { second = a[i2]; break; }
+      }
+      if (!second || second.shanten !== best.shanten) continue;
+      var margin = best.count - second.count;
+      if (margin < MIN_MARGIN || margin > MAX_MARGIN) continue;
+
+      // ★答えが孤立牌の局面は出さない。先読みの前に落として計算時間を増やさない
+      if (isIsolated(c, best.discard)) continue;
+
+      // ★2手先まで読んで最善を決める（2026-09-11）。受け入れ枚数だけでは
+      //   両面とカンチャンの差が見えない。1手先の条件で問題を選び、答えは2手先で決める
+      var r2 = E.analyzeDiscards2(c, null, LOOKAHEAD_TOPK, LOOKAHEAD_WITHIN);
+      var best2 = r2.best2;
+      if (!best2 || r2.ranked2.length < 2) continue;
+      var sec2 = r2.ranked2[1];
+      if (best2.score2 <= 0 || (best2.score2 - sec2.score2) / best2.score2 < MIN_REL_MARGIN) continue;
+      if (isIsolated(c, best2.discard)) continue;
+
+      // ★best1 は r2.analysis 側のオブジェクトを指すこと。旧配列の方には 2手先の値が付いていない
+      var best1 = r2.analysis[0];
+      return { hand: c, analysis: r2.analysis, best: best2, best1: best1, second: second, margin: margin,
+               disagree: best2.discard !== best1.discard };
+    }
+    return null;
+  }
+
+  function judge(q, discard) {
+    var mine = null;
+    for (var i = 0; i < q.analysis.length; i++) {
+      if (q.analysis[i].discard === discard) mine = q.analysis[i];
+    }
+    if (!mine) return null;
+    var b = q.best;
+    if (mine.discard === b.discard) return { key: 'best', step: 0, loss: 0, lossRel: 0, mine: mine };
+    // シャンテンが戻る一打は枚数で比較しない。戻ったぶん受け入れはむしろ増えるため
+    if (mine.shanten > b.shanten) return { key: 'back', step: 3, loss: null, lossRel: null, mine: mine };
+    // 上位に入っていない打牌は、ここで2手先を計算する
+    if (mine.score2 === undefined) {
+      q.hand[mine.discard]--;
+      var ev = E.evaluate(q.hand, null);
+      q.hand[mine.discard]++;
+      mine.score2 = ev.value; mine.avgNext = ev.avgNext;
+      mine.improveTiles = ev.improveTiles; mine.improveGain = ev.improveGain;
+    }
+    var loss = b.count - mine.count;
+    var lossRel = b.score2 > 0 ? (b.score2 - mine.score2) / b.score2 : 0;
+    if (lossRel <= REL_CLOSE) return { key: 'close', step: 1, loss: loss, lossRel: lossRel, mine: mine };
+    return { key: 'lose', step: 2, loss: loss, lossRel: lossRel, mine: mine };
+  }
+
+  // トップ画面に並べる役満の聴牌形。萬0-8 筒9-17 索18-26 東27 南28 西29 北30 白31 發32 中33
+  // 適当な牌を並べない。それぞれ実際に聴牌している 13 枚（drill.test.js で検算）
+  var YAKUMAN_TENPAI = [
+    { name: '国士無双', wait: '十三面待ち', tiles: [0, 8, 9, 17, 18, 26, 27, 28, 29, 30, 31, 32, 33] },
+    { name: '九蓮宝燈', wait: '九面待ち', tiles: [0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 8] },
+    { name: '大三元', wait: '中・7索のシャンポン', tiles: [10, 11, 12, 24, 24, 31, 31, 31, 32, 32, 32, 33, 33] },
+    { name: '四暗刻', wait: '7筒の単騎', tiles: [0, 0, 0, 13, 13, 13, 15, 26, 26, 26, 27, 27, 27] },
+    { name: '字一色', wait: '西・白のシャンポン', tiles: [27, 27, 27, 28, 28, 28, 29, 29, 30, 30, 30, 31, 31] },
+    { name: '緑一色', wait: '6索・發のシャンポン', tiles: [19, 19, 19, 20, 20, 20, 21, 21, 21, 23, 23, 32, 32] },
+    { name: '清老頭', wait: '1萬・9索のシャンポン', tiles: [0, 0, 8, 8, 8, 9, 9, 9, 17, 17, 17, 26, 26] },
+    { name: '大四喜', wait: '北・5筒のシャンポン', tiles: [13, 13, 27, 27, 27, 28, 28, 28, 29, 29, 29, 30, 30] },
+    { name: '小四喜', wait: '1筒・4筒のリャンメン', tiles: [10, 11, 27, 27, 27, 28, 28, 28, 29, 29, 30, 30, 30] }
+  ];
+
+  var api = {
+    YAKUMAN_TENPAI: YAKUMAN_TENPAI,
+    LOSS_CLOSE: LOSS_CLOSE, REL_CLOSE: REL_CLOSE, MIN_REL_MARGIN: MIN_REL_MARGIN,
+    MIN_SHANTEN: MIN_SHANTEN,
+    MAX_SHANTEN: MAX_SHANTEN,
+    MIN_MARGIN: MIN_MARGIN,
+    MAX_MARGIN: MAX_MARGIN,
+    MIN_SAME_SHANTEN: MIN_SAME_SHANTEN,
+    dealHand: dealHand,
+    isIsolated: isIsolated,
+    makeQuestion: makeQuestion,
+    judge: judge
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.Drill = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script id="mod-danger">
+// 危険度シミュレータ — リーチ者の聴牌形を大量に振って、各牌の放銃回数を実測する。
+// UIから独立。DOMに触れない。
+//
+// 打ち手モデルの仮定（CLAUDE.md 参照）:
+//   A. 待ちの形の出現率は実測値を使う（両面56.30% / シャンポン18.18% / カンチャン12.08%
+//      / 単騎9.91% / ペンチャン3.53%）。形を一様に選ぶと両面が23%まで落ち、実戦と乖離する。
+//      これは「答え」ではなく「打ち手のモデル」なので、外部の実測値を入れてよい。
+//   B. 振聴の手は捨てる（自分の河にある牌では和了れない）。スジ・現物はここから出る。
+//   C. 見えている枚数を引いた残り枚数からしか手を組めない。壁・ワンチャンスはここから出る。
+//   D. 役牌のトイツは残りやすい（場風・自風・三元牌のシャンポン率を上げる）。
+(function (root) {
+  'use strict';
+
+  var T = 34;
+
+  // 待ちの形の出現率。出典は docs/spec-betaori.md 2.9
+  var WAIT_MIX = [
+    ['ryanmen', 0.5630],
+    ['shanpon', 0.1818],
+    ['kanchan', 0.1208],
+    ['tanki', 0.0991],
+    ['penchan', 0.0353]
+  ];
+  var CHIITOI_RATE = 0.055;   // 七対子リーチの割合（面子手とは別に振る）
+  var YAKUHAI_BOOST = 2.5;    // 役牌トイツの選ばれやすさ（仮定D）
+
+  function suitOf(t) { return t < 27 ? (t / 9) | 0 : -1; }
+  function numOf(t) { return t < 27 ? t % 9 : -1; }
+
+  function pick(arr, rnd) { return arr[(rnd() * arr.length) | 0]; }
+
+  // 重み付きの1件選択
+  function pickWeighted(arr, weightOf, rnd) {
+    var total = 0, i;
+    for (i = 0; i < arr.length; i++) total += weightOf(arr[i]);
+    if (total <= 0) return null;
+    var r = rnd() * total;
+    for (i = 0; i < arr.length; i++) {
+      r -= weightOf(arr[i]);
+      if (r <= 0) return arr[i];
+    }
+    return arr[arr.length - 1];
+  }
+
+  // ---------- 1サンプル ----------
+
+  function Sampler(avail, yakuhai, rnd) {
+    this.avail = avail;
+    this.yakuhai = yakuhai;   // 役牌の牌インデックスの集合
+    this.rnd = rnd;
+    this.left = new Array(T);
+  }
+
+  Sampler.prototype.reset = function () {
+    for (var i = 0; i < T; i++) this.left[i] = this.avail[i];
+  };
+
+  Sampler.prototype.take = function (t, n) {
+    if (this.left[t] < n) return false;
+    this.left[t] -= n;
+    return true;
+  };
+
+  // 面子を1つ置く。置けなければ false
+  Sampler.prototype.putMeld = function () {
+    var cands = [], t, s, n;
+    for (t = 0; t < T; t++) if (this.left[t] >= 3) cands.push({ k: 'k', t: t });
+    for (t = 0; t < 27; t++) {
+      n = numOf(t);
+      if (n <= 6 && this.left[t] > 0 && this.left[t + 1] > 0 && this.left[t + 2] > 0) cands.push({ k: 's', t: t });
+    }
+    if (!cands.length) return false;
+    var c = pick(cands, this.rnd);
+    if (c.k === 'k') { this.take(c.t, 3); }
+    else { this.take(c.t, 1); this.take(c.t + 1, 1); this.take(c.t + 2, 1); }
+    return true;
+  };
+
+  // 対子を1つ置く。役牌は選ばれやすい（仮定D）
+  Sampler.prototype.putPair = function () {
+    var cands = [], t;
+    for (t = 0; t < T; t++) if (this.left[t] >= 2) cands.push(t);
+    if (!cands.length) return -1;
+    var self = this;
+    var c = pickWeighted(cands, function (x) { return self.yakuhai[x] ? YAKUHAI_BOOST : 1; }, this.rnd);
+    this.take(c, 2);
+    return c;
+  };
+
+  // 聴牌形を1つ作る。戻り値は待ち牌の配列。作れなければ null
+  Sampler.prototype.sample = function () {
+    this.reset();
+    var rnd = this.rnd, i, t, n, cands, c;
+
+    // 七対子
+    if (rnd() < CHIITOI_RATE) {
+      var kinds = [];
+      for (t = 0; t < T; t++) if (this.left[t] >= 2) kinds.push(t);
+      if (kinds.length < 7) return null;
+      for (i = 0; i < 6; i++) {
+        var p = this.putPair();
+        if (p < 0) return null;
+      }
+      var singles = [];
+      for (t = 0; t < T; t++) if (this.left[t] >= 1) singles.push(t);
+      if (!singles.length) return null;
+      var sg = pick(singles, rnd);
+      this.take(sg, 1);
+      return [sg];
+    }
+
+    // 待ちの形を選ぶ
+    var r = rnd(), acc = 0, kind = 'ryanmen';
+    for (i = 0; i < WAIT_MIX.length; i++) {
+      acc += WAIT_MIX[i][1];
+      if (r <= acc) { kind = WAIT_MIX[i][0]; break; }
+    }
+
+    var waits = null, melds = 3, needPair = true;
+
+    if (kind === 'ryanmen') {
+      cands = [];
+      for (t = 0; t < 27; t++) {
+        n = numOf(t);
+        if (n >= 1 && n <= 6 && this.left[t] > 0 && this.left[t + 1] > 0) cands.push(t);
+      }
+      if (!cands.length) return null;
+      c = pick(cands, rnd);
+      this.take(c, 1); this.take(c + 1, 1);
+      waits = [c - 1, c + 2];
+    } else if (kind === 'penchan') {
+      cands = [];
+      for (t = 0; t < 27; t++) {
+        n = numOf(t);
+        if ((n === 0 || n === 7) && this.left[t] > 0 && this.left[t + 1] > 0) cands.push(t);
+      }
+      if (!cands.length) return null;
+      c = pick(cands, rnd);
+      this.take(c, 1); this.take(c + 1, 1);
+      waits = [n === 0 ? c + 2 : c - 1];
+      waits = [numOf(c) === 0 ? c + 2 : c - 1];
+    } else if (kind === 'kanchan') {
+      cands = [];
+      for (t = 0; t < 27; t++) {
+        n = numOf(t);
+        if (n <= 6 && this.left[t] > 0 && this.left[t + 2] > 0) cands.push(t);
+      }
+      if (!cands.length) return null;
+      c = pick(cands, rnd);
+      this.take(c, 1); this.take(c + 2, 1);
+      waits = [c + 1];
+    } else if (kind === 'shanpon') {
+      var a = this.putPair();
+      if (a < 0) return null;
+      var b = this.putPair();
+      if (b < 0) return null;
+      waits = [a, b];
+      needPair = false;
+    } else { // tanki
+      cands = [];
+      for (t = 0; t < T; t++) if (this.left[t] >= 1) cands.push(t);
+      if (!cands.length) return null;
+      var self = this;
+      c = pickWeighted(cands, function (x) { return self.yakuhai[x] ? YAKUHAI_BOOST : 1; }, rnd);
+      this.take(c, 1);
+      waits = [c];
+      melds = 4;
+      needPair = false;
+    }
+
+    if (needPair && this.putPair() < 0) return null;
+    for (i = 0; i < melds; i++) if (!this.putMeld()) return null;
+
+    return waits;
+  };
+
+  // ---------- 本体 ----------
+
+  // state: {
+  //   visible: counts[34]  … 自分から見えている枚数（自分の手牌＋全員の河）
+  //   ownDiscards: counts[34] … リーチ者自身の捨て牌（振聴の判定に使う）
+  //   yakuhai: [牌インデックス...] … リーチ者にとっての役牌（場風・自風・三元牌）
+  // }
+  // 戻り値: { samples, hits: counts[34], rate: [34] }
+  // 仮定E: 序盤（3巡目まで）に切った数牌の周辺（同色で±2以内）を使う手は、持っていにくい。
+  //   「序盤に萬子がたくさん出ているから萬子は通る」という読みを、確率に反映させる。
+  //   周辺を使っている手は、この確率でしか採用しない
+  var EARLY_TURNS = 3, EARLY_NEIGHBOR_KEEP = 0.4;
+
+  function simulate(state, samples, rnd) {
+    rnd = rnd || Math.random;
+    samples = samples || 30000;
+    var early = (state.river || []).slice(0, EARLY_TURNS).filter(function (t) { return t < 27; });
+
+    var avail = new Array(T), i;
+    for (i = 0; i < T; i++) avail[i] = Math.max(0, 4 - (state.visible[i] || 0));
+
+    var yaku = new Array(T).fill(0);
+    (state.yakuhai || []).forEach(function (t) { yaku[t] = 1; });
+
+    var sp = new Sampler(avail, yaku, rnd);
+    var hits = new Array(T).fill(0);
+    var ok = 0, tries = 0, maxTries = samples * 12;
+
+    while (ok < samples && tries < maxTries) {
+      tries++;
+      var waits = sp.sample();
+      if (!waits) continue;
+      // 待ちが範囲外・残り0枚のものを除く
+      var valid = [], j;
+      for (j = 0; j < waits.length; j++) {
+        var w = waits[j];
+        if (w < 0 || w >= T) { valid = null; break; }
+        if (w < 27 && (numOf(w) < 0 || numOf(w) > 8)) { valid = null; break; }
+        valid.push(w);
+      }
+      if (!valid || !valid.length) continue;
+      // 振聴: 自分の河にある牌が待ちに含まれたら和了れない
+      var furiten = false;
+      for (j = 0; j < valid.length; j++) if (state.ownDiscards[valid[j]] > 0) { furiten = true; break; }
+      if (furiten) continue;
+      // その牌が場に1枚も残っていない待ちは成立しない
+      var alive = false;
+      for (j = 0; j < valid.length; j++) if (avail[valid[j]] > 0) alive = true;
+      if (!alive) continue;
+
+      // 仮定E
+      if (early.length) {
+        var touches = false;
+        for (j = 0; j < early.length && !touches; j++) {
+          var d = early[j], sd = suitOf(d), dn = numOf(d);
+          for (var k = Math.max(0, dn - 2); k <= Math.min(8, dn + 2); k++) {
+            var tt = sd * 9 + k;
+            if (avail[tt] - sp.left[tt] > 0) { touches = true; break; }
+          }
+        }
+        if (touches && rnd() > EARLY_NEIGHBOR_KEEP) continue;
+      }
+
+      ok++;
+      for (j = 0; j < valid.length; j++) hits[valid[j]]++;
+    }
+
+    var rate = new Array(T);
+    for (i = 0; i < T; i++) rate[i] = ok ? hits[i] / ok : 0;
+    return { samples: ok, tries: tries, hits: hits, rate: rate };
+  }
+
+  // ---------- 説明: 捨て牌から待ちを復元する ----------
+
+  // 捨て牌 d を含む3枚形を全列挙し、d を抜いて残った形が振聴でなければ生存。
+  // ★このルール1つから、スジ・またぎ筋・裏筋がすべて出る。麻雀の知識は書かない。
+  function shapesFrom(d, ownDiscards) {
+    if (d >= 27) return [];
+    var s = suitOf(d), n = numOf(d), base = s * 9, out = [];
+
+    function add(kept, waits, name) {
+      // 残った形が捨て牌そのものを待つなら振聴で死ぬ
+      for (var i = 0; i < waits.length; i++) if (ownDiscards[waits[i]] > 0) return;
+      // ★またぎ筋・裏筋と呼ぶのはリャンメンだけ。待ちが1枚しかない形はペンチャン（2026-09-11 指摘）
+      if (waits.length < 2 && name !== 'カンチャン') name = 'ペンチャン';
+      out.push({ kept: kept, waits: waits, name: name });
+    }
+    function idx(k) { return base + k; }
+
+    // d のトイツから1枚落とした形 → 残るリャンメンが d を含む（またぎ筋）
+    if (n - 1 >= 0) add([idx(n - 1), idx(n)], wr(n - 1), 'またぎ筋');
+    if (n + 1 <= 8) add([idx(n), idx(n + 1)], wr(n), 'またぎ筋');
+    // d が孤立牌で、隣にリャンメンがあった形（裏筋）
+    if (n - 3 >= 0) add([idx(n - 3), idx(n - 2)], wr(n - 3), '裏筋');
+    if (n + 3 <= 8) add([idx(n + 2), idx(n + 3)], wr(n + 2), '裏筋');
+    // カンチャン
+    if (n - 2 >= 0) add([idx(n - 2), idx(n)], [idx(n - 1)], 'カンチャン');
+    if (n + 2 <= 8) add([idx(n), idx(n + 2)], [idx(n + 1)], 'カンチャン');
+
+    function wr(k) {
+      // k, k+1 のリャンメン待ち
+      var w = [];
+      if (k - 1 >= 0) w.push(idx(k - 1));
+      if (k + 2 <= 8) w.push(idx(k + 2));
+      return w;
+    }
+    return out;
+  }
+
+  // 牌 t に当たる形をすべて並べる。河にある牌で消えたものには dead を立てる。
+  // ★「消えた形が0通り＝完全無筋」という説明は、この列挙から出す
+  // visible を渡すと、搭子に使う牌が4枚見えている形にも「壁で消滅」の印を立てる
+  function waysToHit(t, ownDiscards, visible) {
+    var out = [];
+    function add(kept, waits, type) {
+      var dead = null, deadBy = null, i;
+      for (i = 0; i < waits.length; i++) if (ownDiscards[waits[i]] > 0) { dead = waits[i]; deadBy = 'furiten'; break; }
+      if (dead === null && visible) {
+        for (i = 0; i < kept.length; i++) {
+          // 単騎・シャンポンは自分の手にある牌なので壁の対象外
+          if (type !== '単騎' && type !== 'シャンポン' && visible[kept[i]] >= 4) { dead = kept[i]; deadBy = 'wall'; break; }
+        }
+      }
+      out.push({ kept: kept, waits: waits, type: type, dead: dead, deadBy: deadBy });
+    }
+    if (t < 27) {
+      var s = suitOf(t), n = numOf(t), b = s * 9;
+      // リャンメン（端ではペンチャンになる）: t の右側に2枚 / 左側に2枚
+      if (n + 2 <= 8) {
+        var w1 = [t];
+        if (n + 3 <= 8) w1.push(b + n + 3);
+        add([b + n + 1, b + n + 2], w1, w1.length === 1 ? 'ペンチャン' : 'リャンメン');
+      }
+      if (n - 2 >= 0) {
+        var w2 = [];
+        if (n - 3 >= 0) w2.push(b + n - 3);
+        w2.push(t);
+        add([b + n - 2, b + n - 1], w2, w2.length === 1 ? 'ペンチャン' : 'リャンメン');
+      }
+      if (n - 1 >= 0 && n + 1 <= 8) add([b + n - 1, b + n + 1], [t], 'カンチャン');
+    }
+    add([t], [t], '単騎');
+    add([t, t], [t], 'シャンポン');
+    return out;
+  }
+
+  // 牌 t に当たる形のうち、河の牌 d に由来するものを返す
+  function originsOf(t, river, ownDiscards) {
+    var out = [];
+    // ★端牌（1・9）にまたぎ筋・裏筋は無い（2026-09-11 指摘）
+    if (t >= 27 || numOf(t) === 0 || numOf(t) === 8) return out;
+    for (var i = 0; i < river.length; i++) {
+      var d = river[i];
+      var sh = shapesFrom(d, ownDiscards);
+      for (var j = 0; j < sh.length; j++) {
+        if (sh[j].waits.indexOf(t) >= 0) {
+          out.push({ discard: d, turn: i + 1, kept: sh[j].kept, waits: sh[j].waits, name: sh[j].name });
+        }
+      }
+    }
+    return out;
+  }
+
+  var api = {
+    WAIT_MIX: WAIT_MIX,
+    CHIITOI_RATE: CHIITOI_RATE,
+    EARLY_TURNS: EARLY_TURNS, EARLY_NEIGHBOR_KEEP: EARLY_NEIGHBOR_KEEP,
+    simulate: simulate,
+    shapesFrom: shapesFrom,
+    waysToHit: waysToHit,
+    originsOf: originsOf
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.Danger = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script id="mod-betaori">
+// ベタオリドリルの局面生成・分類・判定 — UIから独立。DOMに触れない。
+(function (root) {
+  'use strict';
+
+  var isNode = (typeof module !== 'undefined' && module.exports);
+  var E = isNode ? require('./engine.js') : root.Engine;
+  var G = isNode ? require('./danger.js') : root.Danger;
+
+  var T = 34;
+  var SAMPLES = 40000;
+
+  // スタンスの閾値（放銃率の差、パーセントポイント）。★暫定値。実データで見直す
+  //   TH_SAFE 以内なら「安全側」。形を崩すかどうかは牌効率の最善打との差で見る
+  var TH_SAFE = 0.8, TH_MAWASHI = 2.5, TH_SHOU = 5.0, TH_BOU = 8.0, BREAK_UKEIRE = 4;
+
+  var WINDS = ['東', '南', '西', '北'];
+  var SEATS = ['下家', '対面', '上家'];
+
+  function numOf(t) { return t < 27 ? t % 9 : -1; }
+  function suitOf(t) { return t < 27 ? (t / 9) | 0 : -1; }
+  function pick(a, rnd) { return a[(rnd() * a.length) | 0]; }
+  function shuffle(a, rnd) {
+    for (var i = a.length - 1; i > 0; i--) { var j = (rnd() * (i + 1)) | 0; var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+
+  // ---------- 河をつくる ----------
+  // 序盤は端牌と字牌、中盤は中張牌。実際の切り順に近づける
+  function makeRiver(rnd, opt) {
+    var turns = 6 + ((rnd() * 5) | 0);   // 6〜10巡
+    var used = new Array(T).fill(0);
+    var river = [];
+    function put(t) { if (used[t] >= 4) return false; used[t]++; river.push(t); return true; }
+
+    var early = [], mid = [];
+    for (var t = 0; t < T; t++) {
+      var n = numOf(t);
+      if (t >= 27 || n === 0 || n === 8) early.push(t);
+      else if (n === 1 || n === 7) early.push(t);
+      else mid.push(t);
+    }
+    var i, guard;
+    for (i = 0; i < turns - 2; i++) {
+      var fromEarly = rnd() < (i < 3 ? 0.85 : 0.45);
+      guard = 0;
+      while (guard++ < 20 && !put(pick(fromEarly ? early : mid, rnd))) {}
+    }
+    // 中盤の中張牌手出し（またぎ筋の出どころ）
+    guard = 0;
+    while (guard++ < 20 && !put(pick(mid, rnd))) {}
+    var tedashi = river.length - 1;
+
+    // ★宣言牌。3回に1回は「抱えていた安全牌」（字牌）にする。
+    //   宣言牌だけを見て判断する癖を防ぐため（docs/spec-betaori.md 2.6）
+    var heldSafe = rnd() < 0.34;
+    var pool = heldSafe ? early.filter(function (x) { return x >= 27; }) : mid;
+    guard = 0;
+    while (guard++ < 30 && !put(pick(pool, rnd))) {}
+    var reachIdx = river.length - 1;
+
+    return { river: river, reachIndex: reachIdx, tedashiIndex: tedashi, heldSafeReach: heldSafe, turn: river.length };
+  }
+
+  // ---------- 分類 ----------
+
+  // 1枚に複数のラベルが立つ。★ラベルから危険度を導かない。順位は計算値だけが決める
+  function labelsOf(t, ctx) {
+    var out = [];
+    var own = ctx.ownDiscards, vis = ctx.visible;
+
+    if (own[t] > 0) { out.push({ text: '現物', dir: 'safe' }); return out; }
+
+    if (t >= 27) {
+      var left = 4 - vis[t];
+      out.push({ text: '字牌・残り' + left + '枚', dir: left <= 2 ? 'safe' : 'mid' });
+      if (ctx.yakuhai.indexOf(t) >= 0) out.push({ text: 'この人の役牌', dir: 'danger' });
+      return out;
+    }
+
+    var n = numOf(t), b = suitOf(t) * 9;
+    var sk = sujiKind(t, own);
+    if (sk) out.push({ text: SUJI_TEXT[sk], dir: 'safe' });
+
+    // ★壁・ワンチャンス（2026-09-11 判定を直した）。
+    //   その牌に当たるリャンメンは、下側 (n-2,n-1) と上側 (n+1,n+2) の2本。
+    //   どちらかの搭子に使う牌が4枚見えていれば、そのリャンメンは作れない（壁）。3枚見えなら残り1枚（ワンチャンス）。
+    //   両側とも作れなければ「ノーチャンス」＝リャンメンでは当たらない
+    var wk = wallKind(t, vis, own);
+    if (wk === 'nochance') out.push({ text: '壁（ノーチャンス）', dir: 'safe' });
+    else if (wk === 'wall') out.push({ text: '片側が壁', dir: 'safe' });
+    else if (wk === 'onechance') out.push({ text: 'ワンチャンス', dir: 'safe' });
+
+    // 河の牌に由来する形（またぎ筋・裏筋）
+    var org = G.originsOf(t, ctx.river, own);
+    var seen = {};
+    org.forEach(function (o) {
+      if (o.name === 'カンチャン' || o.name === 'ペンチャン') return;
+      var key = o.name + o.discard;
+      if (seen[key]) return;
+      seen[key] = 1;
+      // ★序盤（3巡目まで）に切られた牌のまたぎ筋・裏筋は、危険度が低めに出る（仮定E）。ラベルの色も落とす
+      var early = o.turn <= 3;
+      out.push({ text: o.name + '（' + o.turn + '巡目の' + tileName(o.discard) + (early ? '・序盤' : '') + '）', dir: early ? 'mid' : 'danger', turn: o.turn });
+    });
+
+    if (!out.length) out.push({ text: '完全無筋', dir: 'danger' });
+    // ★端牌は無筋でも中張牌より当たりにくい（リャンメンが片側にしか無く、カンチャンも無い）。
+    //   それしか切れない場面もあるので、必ず添える（2026-09-11 指摘）
+    if (n === 0 || n === 8) out.push({ text: '端牌（当たる形が少ない）', dir: 'mid' });
+    else if (n === 1 || n === 7) out.push({ text: '2・8（カンチャンとペンチャンが多い）', dir: 'mid' });
+    return out;
+  }
+
+  function categoryOf(t, ctx) {
+    if (ctx.ownDiscards[t] > 0) return 'genbutsu';
+    if (t >= 27) return 'honor';
+    var n = numOf(t), own = ctx.ownDiscards;
+    if (sujiKind(t, own)) return 'suji';
+    if (n === 0 || n === 8) return 'terminal';
+    var org = G.originsOf(t, ctx.river, own).filter(function (o) { return o.name !== 'カンチャン' && o.name !== 'ペンチャン'; });
+    if (org.length) return 'suji-derived';
+    return 'musuji';
+  }
+
+  // ★スジの言い分け（2026-09-11 指摘を受けて修正）
+  //   1〜3・7〜9: リャンメンは片側にしか無い。それが河で消えていれば「スジ」
+  //   4〜6      : リャンメンが両側にある。片側だけ消えていれば「片スジ」、両側なら「中スジ」
+  //   例) 4切りに対する 7 は スジ。1切りに対する 4 は 片スジ（4-7 の側が生きている）
+  function sujiKind(t, own) {
+    if (t >= 27 || own[t] > 0) return null;
+    var n = numOf(t), b = suitOf(t) * 9;
+    var lo = n - 3 >= 0 && own[b + n - 3] > 0;   // 下側のリャンメンが消えた
+    var hi = n + 3 <= 8 && own[b + n + 3] > 0;   // 上側のリャンメンが消えた
+    if (n <= 2) return hi ? 'suji' : null;        // 1〜3 は上側しか無い
+    if (n >= 6) return lo ? 'suji' : null;        // 7〜9 は下側しか無い
+    if (lo && hi) return 'naka';
+    if (lo || hi) return 'kata';
+    return null;
+  }
+  var SUJI_TEXT = { suji: 'スジ', kata: '片スジ', naka: '中スジ' };
+
+  // 壁の判定。戻り値: 'nochance' | 'wall' | 'onechance' | null
+  // own を渡すと、スジで既に消えている側は無視する（スジで消えた側に壁やワンチャンスを付けても意味がない）
+  function wallKind(t, vis, own) {
+    if (t >= 27) return null;
+    var n = numOf(t), b = suitOf(t) * 9;
+    function sideState(a1, a2, sujiTile) {  // 搭子 (a1,a2) が作れるか
+      if (a1 < 0 || a2 > 8) return 'none';   // その側にリャンメンは無い
+      if (own && sujiTile >= 0 && sujiTile <= 8 && own[b + sujiTile] > 0) return 'none';  // スジで消えている
+      var m = Math.max(vis[b + a1], vis[b + a2]);
+      if (m >= 4) return 'dead';
+      if (m === 3) return 'thin';
+      return 'alive';
+    }
+    var lo = sideState(n - 2, n - 1, n - 3), hi = sideState(n + 1, n + 2, n + 3);
+    var sides = [lo, hi].filter(function (s) { return s !== 'none'; });
+    if (!sides.length) return null;
+    if (sides.every(function (s) { return s === 'dead'; })) return 'nochance';
+    if (sides.some(function (s) { return s === 'dead'; })) return 'wall';
+    if (sides.some(function (s) { return s === 'thin'; })) return 'onechance';
+    return null;
+  }
+
+  function tileName(i) {
+    if (i >= 27) return ['東', '南', '西', '北', '白', '發', '中'][i - 27];
+    return (i % 9 + 1) + (i < 9 ? '萬' : i < 18 ? '筒' : '索');
+  }
+
+  // ---------- 出題 ----------
+
+  // ★手牌には次の分類を最低1枚ずつ入れる（docs/spec-betaori.md 2.5）
+  var REQUIRED = ['musuji', 'suji-derived', 'terminal', 'suji'];
+  // ★字牌は必須にしない。入れると答えがほとんど字牌になる（2026-09-11 指摘）。
+  //   6割の局面に1枚だけ入れる。それ以上は入れない
+  var HONOR_RATE = 0, HONOR_MAX = 1;   // ★字牌は手牌に入れない（2026-09-11 指摘。字牌は残り枚数で決まるだけで、形の問題にならない）
+  var WALL_RATE = 0.3;
+
+  function makeQuestion(rnd) {
+    rnd = rnd || Math.random;
+
+    for (var attempt = 0; attempt < 60; attempt++) {
+      var r = makeRiver(rnd);
+      var roundWind = 27;                       // 東場
+      var seatIdx = (rnd() * 3) | 0;            // 下家/対面/上家
+      var mySeat = 1 + ((rnd() * 3) | 0);       // 自分は南・西・北家のどれか
+      var theirWind = 27 + ((mySeat + seatIdx + 1) % 4);
+      var yakuhai = [roundWind, theirWind, 31, 32, 33];
+
+      var own = new Array(T).fill(0);
+      r.river.forEach(function (t) { own[t]++; });
+
+      // ★壁の局面を3割混ぜる（2026-09-11）。ある中張牌を河に3枚出し、手牌にも1枚持たせて4枚見えにする。
+      //   壁は「見えている枚数」だけから機械的に出る安全度で、素人に効く概念としてはスジの次に大きい
+      // ★壁の牌は自分の手には持たせない（現物になって「切るだけ」になる）。
+      //   リーチ者の河に2枚、他家の河に2枚で4枚見えにする
+      var wallTile = -1;
+      var other = new Array(T).fill(0);    // 他家の河（見えている牌）
+      if (rnd() < WALL_RATE) {
+        var mids = [];
+        for (var wt = 0; wt < 27; wt++) if (numOf(wt) >= 1 && numOf(wt) <= 7 && own[wt] === 0) mids.push(wt);
+        if (mids.length) {
+          wallTile = pick(mids, rnd);
+          for (var wi = 0; wi < 2; wi++) {
+            var pos = 1 + ((rnd() * (r.river.length - 2)) | 0);
+            r.river.splice(pos, 0, wallTile);
+            if (pos <= r.tedashiIndex) r.tedashiIndex++;
+            r.reachIndex++;
+          }
+          r.turn = r.river.length;
+          own[wallTile] += 2;
+          other[wallTile] += 2;
+        }
+      }
+      // 他家の河にも、ふつうに数枚見えている（壁の有無に関わらず）
+      for (var oi = 0; oi < 4 + ((rnd() * 4) | 0); oi++) {
+        var ot = (rnd() * T) | 0;
+        if (own[ot] + other[ot] < 3) other[ot]++;
+      }
+      var seen = own.slice();
+      for (var sv = 0; sv < T; sv++) seen[sv] += other[sv];
+
+      var ctx = { river: r.river, ownDiscards: own, visible: seen, yakuhai: yakuhai };
+
+      // 分類ごとに候補を集める
+      var byCat = {};
+      for (var t = 0; t < T; t++) {
+        if (own[t] >= 4) continue;
+        if (own[t] + other[t] >= 4) continue;
+        var cat = categoryOf(t, ctx);
+        if (cat === 'genbutsu') continue;         // ★現物は入れない
+        (byCat[cat] = byCat[cat] || []).push(t);
+      }
+      var missing = REQUIRED.filter(function (c) { return !byCat[c] || !byCat[c].length; });
+      if (missing.length) continue;
+
+      // 手牌14枚。まず必須分類を1枚ずつ、残りは適当に埋める
+      var hand = new Array(T).fill(0);
+      var okAll = true;
+      REQUIRED.forEach(function (c) {
+        var cand = byCat[c].filter(function (x) { return hand[x] + own[x] < 4; });
+        if (!cand.length) { okAll = false; return; }
+        hand[pick(cand, rnd)]++;
+      });
+      if (!okAll) continue;
+      if (wallTile >= 0) {
+        // 壁の恩恵を受ける牌（壁の外側）を1枚入れる
+        var wn = numOf(wallTile), wb = suitOf(wallTile) * 9, outer = [];
+        if (wn - 1 >= 0 && own[wb + wn - 1] === 0) outer.push(wb + wn - 1);
+        if (wn - 2 >= 0 && own[wb + wn - 2] === 0) outer.push(wb + wn - 2);
+        if (wn + 1 <= 8 && own[wb + wn + 1] === 0) outer.push(wb + wn + 1);
+        if (wn + 2 <= 8 && own[wb + wn + 2] === 0) outer.push(wb + wn + 2);
+        outer = outer.filter(function (x) { return hand[x] + own[x] + other[x] < 4; });
+        if (outer.length) hand[pick(outer, rnd)]++;
+      }
+      if (byCat.honor && byCat.honor.length && rnd() < HONOR_RATE) {
+        var hc = byCat.honor.filter(function (x) { return hand[x] + own[x] < 4; });
+        if (hc.length) hand[pick(hc, rnd)]++;
+      }
+
+      // ★必須分類の牌を手の形に組み込む。
+      //   バラバラの手にすると、安全牌がそのまま不要牌になり、
+      //   ほとんどの打牌が「ただの損」になって問題として成立しない
+      var seeds = [];
+      for (var si = 0; si < T; si++) if (hand[si]) seeds.push(si);
+      seeds.forEach(function (s) {
+        if (s >= 27) return;
+        // ★安全側の牌ほど形に組み込む。安全牌が不要牌のままだと、
+        //   打牌の大半が「ただの損」になり、押し引きの問題として成立しない
+        var cat = categoryOf(s, ctx);
+        var pSeed = (cat === 'suji' || cat === 'terminal') ? 0.88 : 0.3;
+        if (rnd() > pSeed) return;
+        var n = numOf(s), b = suitOf(s) * 9;
+        var nb = [];
+        if (n - 1 >= 0) nb.push(b + n - 1);
+        if (n + 1 <= 8) nb.push(b + n + 1);
+        if (n - 2 >= 0) nb.push(b + n - 2);
+        if (n + 2 <= 8) nb.push(b + n + 2);
+        nb = nb.filter(function (x) { return own[x] === 0 && own[x] + other[x] + hand[x] < 4; });
+        if (nb.length) hand[pick(nb, rnd)]++;
+      });
+
+      var all = [];
+      for (var k = 0; k < 27; k++) if (own[k] + other[k] + hand[k] < 4 && own[k] === 0) all.push(k);
+      shuffle(all, rnd);
+      var cur = 0;
+      for (var ci = 0; ci < T; ci++) cur += hand[ci];
+      var need = 14 - cur, gi = 0;
+      while (need > 0 && gi < all.length * 4) {
+        var g = all[gi % all.length]; gi++;
+        if (hand[g] + own[g] >= 4 || hand[g] >= 3) continue;
+        hand[g]++; need--;
+      }
+      // 入れすぎたら削る（隣接追加で14枚を超えることがある）
+      while (need < 0) {
+        var drop = [];
+        for (var di = 0; di < T; di++) if (hand[di] > 0 && REQUIRED.indexOf(categoryOf(di, ctx)) < 0) drop.push(di);
+        if (!drop.length) break;
+        hand[pick(drop, rnd)]--;
+        need++;
+      }
+      if (need !== 0) continue;
+
+      // 見えている枚数 = リーチ者の河 + 他家の河 + 自分の手牌
+      var visible = seen.slice();
+      for (var v = 0; v < T; v++) visible[v] += hand[v];
+      var sim = G.simulate({ visible: visible, ownDiscards: own, yakuhai: yakuhai, river: r.river }, SAMPLES, rnd);
+
+      // ラベルの判定は、自分の手牌も含めた見えている枚数で行う（壁は手牌の分も数える）
+      ctx.visible = visible;
+
+      // 手牌の各牌について、危険度と打牌後の受け入れ
+      var options = [];
+      for (var d = 0; d < T; d++) {
+        if (!hand[d]) continue;
+        hand[d]--;
+        var uk = E.ukeire(hand, own);
+        hand[d]++;
+        options.push({
+          tile: d,
+          rate: sim.rate[d],
+          hits: sim.hits[d],
+          shanten: uk.shanten,
+          ukeire: uk.count,
+          labels: labelsOf(d, ctx),
+          category: categoryOf(d, ctx)
+        });
+      }
+      options.sort(function (a, b) { return a.rate - b.rate || a.tile - b.tile; });
+
+      var safest = options[0], riskiest = options[options.length - 1];
+      // 牌効率だけで見た最善打
+      var effBest = options.slice().sort(function (x, y) {
+        return x.shanten - y.shanten || y.ukeire - x.ukeire;
+      })[0];
+      // ★最も安全な牌が、手牌としても最も不要な牌である局面は「切るだけ」の問題になる。
+      //   教材として要るので残すが、4割までに抑える
+      if (effBest.tile === safest.tile && rnd() > 0.4) continue;
+      // 差がほとんど無い局面は出さない（どれを切っても同じ問題になる）
+      if ((riskiest.rate - safest.rate) * 100 < 3) continue;
+      // 最も安全な牌が一意であること
+      if (options.length > 1 && Math.abs(options[1].rate - safest.rate) * 100 < 0.25) continue;
+
+      return {
+        hand: hand,
+        river: r.river,
+        reachIndex: r.reachIndex,
+        tedashiIndex: r.tedashiIndex,
+        heldSafeReach: r.heldSafeReach,
+        turn: r.turn,
+        roundWind: roundWind,
+        theirWind: theirWind,
+        mySeat: 27 + mySeat,
+        seatName: SEATS[seatIdx],
+        yakuhai: yakuhai,
+        ownDiscards: own,
+        otherDiscards: other,
+        wallTile: wallTile,
+        visible: visible,
+        samples: sim.samples,
+        effBest: effBest,
+        options: options,
+        safest: safest,
+        riskiest: riskiest
+      };
+    }
+    return null;
+  }
+
+  // ---------- 判定 ----------
+
+  // ★2軸で言い分ける（2026-09-11 指摘で組み直し）
+  //             | 安全牌（危険度が低い） | 危険牌
+  //   形を崩さない |  安全牌             | 回し／小勝負／大勝負
+  //   形を崩す    |  ベタオリ            | ただの損
+  //   「ベタオリ」は牌効率を捨てて安全牌を切ること。順子を崩してスジを切るのは損ではない。
+  //   「ただの損」は、崩したうえに危険なとき。
+  function breaksShape(q, o) {
+    var e = q.effBest;
+    return o.shanten > e.shanten || (o.shanten === e.shanten && e.ukeire - o.ukeire > BREAK_UKEIRE);
+  }
+
+  function judge(q, tile) {
+    var mine = null, i;
+    for (i = 0; i < q.options.length; i++) if (q.options[i].tile === tile) mine = q.options[i];
+    if (!mine) return null;
+    var s = q.safest;
+    var lossPP = (mine.rate - s.rate) * 100;
+    var ratio = s.rate > 0 ? mine.rate / s.rate : (mine.rate > 0 ? Infinity : 1);
+    var isSafe = lossPP <= TH_SAFE;          // 最安全とほぼ同じ
+    var safeish = lossPP <= TH_MAWASHI;      // 安全側（危険牌ではない）
+    var breaks = breaksShape(q, mine);
+    var base = { lossPP: lossPP, ratio: ratio, mine: mine, breaks: breaks, isSafe: isSafe, safeish: safeish, safest: mine.tile === s.tile };
+    var key;
+    // ★目盛りは「危険の度合い」（2026-09-11 組み直し）。「損」という評価語は使わない。
+    //   押すと決めた人が無スジの中から低い牌を選ぶのは正しく、それを損とは呼べない。
+    //   形を崩したかどうか（breaks）は目盛りに混ぜず、別の注記にする
+    if (safeish) key = breaks ? 'betaori' : (isSafe ? 'anzen' : 'mawashi');
+    else if (mine.tile === q.riskiest.tile || lossPP > TH_BOU) key = 'bouhai';
+    else if (lossPP <= TH_SHOU) key = 'hikaeme';
+    else key = 'shoubu';
+    base.key = key;
+    return base;
+  }
+
+  var api = {
+    SAMPLES: SAMPLES,
+    HONOR_RATE: HONOR_RATE, HONOR_MAX: HONOR_MAX,
+    sujiKind: sujiKind, SUJI_TEXT: SUJI_TEXT, wallKind: wallKind,
+    TH_SAFE: TH_SAFE, TH_MAWASHI: TH_MAWASHI, TH_SHOU: TH_SHOU, TH_BOU: TH_BOU, BREAK_UKEIRE: BREAK_UKEIRE,
+    breaksShape: breaksShape,
+    REQUIRED: REQUIRED,
+    WINDS: WINDS, SEATS: SEATS,
+    tileName: tileName,
+    makeRiver: makeRiver,
+    labelsOf: labelsOf,
+    categoryOf: categoryOf,
+    makeQuestion: makeQuestion,
+    judge: judge
+  };
+
+  if (isNode) module.exports = api;
+  else root.Betaori = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script id="mod-yomi">
+// 手役読みドリルの河生成・特徴量・判定 — UIから独立。DOMに触れない。
+//
+// ★このコースだけ学習の仕組みが違う。危険度は使わず、河のパターンを覚える。
+//   見本 → 類例 → 見わけ の三段で進み、★「警戒しない」が正解の問題を必ず混ぜる。
+// ★答えは「正解／不正解」ではなく「可能性の順」で見せる（2026-09-11）。
+//   河から手役を断定はできない。順位は、同じ生成器で作った河の特徴量との近さから出す。
+(function (root) {
+  'use strict';
+
+  var T = 34;
+  // ★「普通の手」とはタンピン系のこと（端と字牌から払う、いちばんよくある手）。別々にしない。
+  // ★ホンイツとチンイツは河の見え方で分けられないので「染め手」にまとめる（2026-09-11）
+  var KINDS = {
+    normal:  { id: 'normal',  name: '普通の手（タンピン系）', short: '普通の手', hint: '端と字牌を先に払う、いちばんよくある手。当たり牌は中張牌に寄る' },
+    honitsu: { id: 'honitsu', name: '染め手（ホンイツ・チンイツ）', short: '染め手', hint: '1色に寄せて手を作っている' },
+    chanta:  { id: 'chanta',  name: 'チャンタ', short: 'チャンタ', hint: '端牌と字牌だけで手を作っている' },
+    chiitoi: { id: 'chiitoi', name: 'チートイ', short: 'チートイ', hint: '対子を7つ集めている' }
+  };
+  var ORDER = ['normal', 'honitsu', 'chanta', 'chiitoi'];
+  var YAKU = ['honitsu', 'chanta', 'chiitoi'];
+
+  function numOf(t) { return t < 27 ? t % 9 : -1; }
+  function suitOf(t) { return t < 27 ? (t / 9) | 0 : -1; }
+  function isHonor(t) { return t >= 27; }
+  function isTerminal(t) { return t < 27 && (numOf(t) === 0 || numOf(t) === 8); }
+  function isMiddle(t) { return t < 27 && numOf(t) >= 2 && numOf(t) <= 6; }
+  function isEnd(t) { return isHonor(t) || isTerminal(t); }
+  function pick(a, rnd) { return a[(rnd() * a.length) | 0]; }
+
+  function tilesWhere(fn) {
+    var out = [];
+    for (var t = 0; t < T; t++) if (fn(t)) out.push(t);
+    return out;
+  }
+
+  // ---------- 河をつくる ----------
+  // noise: 0 = 露骨、1 = かなり紛らわしい
+
+  function build(kind, noise, rnd) {
+    rnd = rnd || Math.random;
+    var turns = 8 + ((rnd() * 4) | 0);
+    var used = new Array(T).fill(0);
+    var river = [];
+    function put(t) {
+      if (used[t] >= 4) return false;
+      used[t]++; river.push(t); return true;
+    }
+    function tryPut(pool, tries) {
+      for (var k = 0; k < (tries || 25); k++) if (put(pick(pool, rnd))) return true;
+      return false;
+    }
+
+    var i;
+    if (kind === 'honitsu') {
+      // 染める色を決め、その色以外を切っていく。
+      // ★染める色は序盤には出ない（序盤に出ていたら染めていない）。
+      //   終盤に1枚だけ余りが出ることはある
+      var keep = (rnd() * 3) | 0;
+      var others = tilesWhere(function (t) { return t < 27 && suitOf(t) !== keep; });
+      var keepTiles = tilesWhere(function (t) { return suitOf(t) === keep; });
+      var honors = tilesWhere(isHonor);
+      var leaked = false;
+      for (i = 0; i < turns; i++) {
+        if (i < 2 && rnd() < 0.4) { tryPut(honors); continue; }
+        if (!leaked && i >= 5 && rnd() < noise * 0.12) { leaked = tryPut(keepTiles); continue; }
+        tryPut(others);
+      }
+      return { river: river, kind: kind, keepSuit: keep };
+    }
+
+    if (kind === 'chanta') {
+      // 端と字牌で作るので、中張牌が早くから出る
+      var mids = tilesWhere(isMiddle);
+      var ends = tilesWhere(isEnd);
+      for (i = 0; i < turns; i++) {
+        if (rnd() < noise * 0.3) { tryPut(ends); continue; }
+        tryPut(mids);
+      }
+      return { river: river, kind: kind };
+    }
+
+    if (kind === 'chiitoi') {
+      // 対子にならない孤立牌から切る。序盤に中張牌、その後に端牌。
+      // 順子を作らないので、河に前後のつながりが出ない
+      var pool = tilesWhere(function () { return true; });
+      for (i = 0; i < turns; i++) {
+        var wantMid = i < Math.ceil(turns * 0.45);
+        var cand = pool.filter(function (t) {
+          if (used[t] >= 4) return false;
+          if (wantMid ? !isMiddle(t) : isMiddle(t)) return false;
+          if (t < 27) {
+            for (var j = 0; j < river.length; j++) {
+              var r = river[j];
+              if (r < 27 && suitOf(r) === suitOf(t) && Math.abs(numOf(r) - numOf(t)) <= 2) {
+                if (rnd() > noise * 0.5) return false;
+              }
+            }
+          }
+          return true;
+        });
+        if (cand.length) put(pick(cand, rnd)); else tryPut(pool);
+      }
+      return { river: river, kind: kind };
+    }
+
+    // 普通の手（タンピン系）。字牌と端牌から払い、中張牌は中盤以降にぽつぽつ出る
+    var ends2 = tilesWhere(isEnd);
+    var near = tilesWhere(function (t) { return t < 27 && (numOf(t) === 1 || numOf(t) === 7); });
+    var mids2 = tilesWhere(isMiddle);
+    for (i = 0; i < turns; i++) {
+      var r2 = rnd();
+      var pMid = i < 3 ? 0.06 : (i < 6 ? 0.3 : 0.5);
+      if (r2 < pMid) { tryPut(mids2); continue; }
+      if (rnd() < 0.72) tryPut(ends2); else tryPut(near);
+    }
+    return { river: river, kind: kind };
+  }
+
+  // ---------- 特徴量 ----------
+  // ★この5つが、素人に見てほしいものの全部
+  function features(river) {
+    var suit = [0, 0, 0], honor = 0, i, t;
+    for (i = 0; i < river.length; i++) {
+      t = river[i];
+      if (isHonor(t)) honor++; else suit[suitOf(t)]++;
+    }
+    var earlyMid = 0;
+    for (i = 0; i < Math.min(3, river.length); i++) if (isMiddle(river[i])) earlyMid++;
+    var ends = 0, mids = 0;
+    for (i = 0; i < river.length; i++) {
+      if (isEnd(river[i])) ends++;
+      if (isMiddle(river[i])) mids++;
+    }
+    var adjacency = 0;
+    for (i = 0; i < river.length; i++) {
+      for (var j = i + 1; j < river.length; j++) {
+        var a = river[i], b = river[j];
+        if (a < 27 && b < 27 && suitOf(a) === suitOf(b) && Math.abs(numOf(a) - numOf(b)) <= 2) adjacency++;
+      }
+    }
+    var minSuit = Math.min(suit[0], suit[1], suit[2]);
+    var maxSuit = Math.max(suit[0], suit[1], suit[2]);
+    var n = river.length;
+    // 最初に出た染め色候補（最少色）の牌が何巡目か。出ていなければ n+1
+    var minIdx = suit.indexOf(minSuit), firstMin = n + 1;
+    for (i = 0; i < n; i++) if (river[i] < 27 && suitOf(river[i]) === minIdx) { firstMin = i + 1; break; }
+    return {
+      suit: suit, honor: honor, total: n,
+      earlyMid: earlyMid, ends: ends, mids: mids, adjacency: adjacency,
+      minSuit: minSuit, maxSuit: maxSuit, minSuitIndex: minIdx, firstMinSuitTurn: firstMin,
+      // 可能性の計算に使う正規化ベクトル
+      vec: [
+        (maxSuit - minSuit) / n,        // 色の偏り
+        minSuit / n,                    // 最少色の割合
+        earlyMid / 3,                   // 序盤の中張牌
+        ends / n,                       // 端と字牌の割合
+        mids / n,                       // 中張牌の割合
+        adjacency / Math.max(1, n * (n - 1) / 2) * 6,   // つながり
+        Math.min(1, firstMin / n)       // 最少色が最初に出た位置
+      ]
+    };
+  }
+
+  // ---------- 可能性の順 ----------
+  // ★手書きの点数表は持たない。生成器で作った河の特徴量との近さで出す（カーネル密度）
+  var REF = null, REF_N = 220, BW = 0.55;
+
+  function buildRef(rnd) {
+    rnd = rnd || Math.random;
+    var ref = {}, all = [];
+    ORDER.forEach(function (k) {
+      ref[k] = [];
+      for (var i = 0; i < REF_N; i++) {
+        var noise = rnd();
+        var v = features(build(k, noise, rnd).river).vec;
+        ref[k].push(v); all.push(v);
+      }
+    });
+    // 各次元の標準偏差で正規化する
+    var dim = all[0].length, mean = new Array(dim).fill(0), sd = new Array(dim).fill(0), i, d;
+    for (i = 0; i < all.length; i++) for (d = 0; d < dim; d++) mean[d] += all[i][d] / all.length;
+    for (i = 0; i < all.length; i++) for (d = 0; d < dim; d++) sd[d] += Math.pow(all[i][d] - mean[d], 2) / all.length;
+    for (d = 0; d < dim; d++) sd[d] = Math.sqrt(sd[d]) || 1;
+    REF = { ref: ref, sd: sd };
+  }
+
+  // ★事前確率は公開されている役の出現率（天鳳の役統計を基にした一覧。和了に占める割合）
+  //   出典: https://www.mahjong.red/yaku/index_hindo.html （2026年8月の役統計）
+  //   混一色 6.3% + 清一色 0.85% → 染め手 7.15% / 七対子 2.2% / チャンタ 1.1% + 純チャン 0.34% → 1.44%
+  //   残りが普通の手。実戦では9割が普通の手であり、はっきりした河でないと手役の可能性は上がらない
+  var PRIOR = { normal: 0.892, honitsu: 0.0715, chanta: 0.0144, chiitoi: 0.022 };
+
+  // 河の特徴が、各手役の河にどれだけ近いか（尤度）。事前確率は掛けない
+  function likelihood(river, usePrior) {
+    if (!REF) buildRef();
+    var v = features(river).vec, sd = REF.sd;
+    var scores = {}, total = 0;
+    ORDER.forEach(function (k) {
+      var s = 0, arr = REF.ref[k];
+      for (var i = 0; i < arr.length; i++) {
+        var d2 = 0;
+        for (var d = 0; d < v.length; d++) { var z = (v[d] - arr[i][d]) / sd[d] / BW; d2 += z * z; }
+        s += Math.exp(-0.5 * d2);
+      }
+      scores[k] = (s / arr.length) * (usePrior ? PRIOR[k] : 1);
+      total += scores[k];
+    });
+    var out = ORDER.map(function (k) { return { kind: k, p: total > 0 ? scores[k] / total : 1 / ORDER.length }; });
+    out.sort(function (a, b) { return b.p - a.p; });
+    return out;
+  }
+  // 事前確率込み。「実戦でどれくらい疑うべきか」の目安
+  function posterior(river) { return likelihood(river, true); }
+
+  // ---------- 出題 ----------
+
+  function stageOf(index) {
+    if (index <= 1) return 'sample';
+    if (index <= 5) return 'similar';
+    return 'judge';
+  }
+
+  function makeQuestion(index, rnd) {
+    rnd = rnd || Math.random;
+    var stage = stageOf(index);
+    var noise = stage === 'sample' ? 0 : stage === 'similar' ? 0.45 : 0.9;
+
+    var kind;
+    // ★普通の手（タンピン系）も他の手役と同じ頻度で出す（2026-09-11 指摘）。
+    //   類例・見わけとも4種を等確率。見本だけは、見分けやすい2つを固定で見せる
+    if (stage === 'sample') kind = ['honitsu', 'chiitoi'][index % 2];
+    else kind = pick(ORDER, rnd);
+
+    var r = build(kind, noise, rnd);
+    var f = features(r.river);
+    return {
+      index: index, stage: stage, noise: noise,
+      river: r.river, answer: kind, keepSuit: r.keepSuit,
+      features: f,
+      ranking: likelihood(r.river),
+      posterior: posterior(r.river),
+      choices: ORDER.slice()
+    };
+  }
+
+  // hit: 正解 / missed: 手役を普通と見た / falseAlarm: 普通を手役と見た / other: 別の手役
+  function judge(q, choice) {
+    var rank = 1;
+    for (var i = 0; i < q.ranking.length; i++) if (q.ranking[i].kind === choice) rank = i + 1;
+    if (choice === q.answer) return { key: 'hit', correct: q.answer, rank: rank };
+    if (q.answer === 'normal') return { key: 'falseAlarm', correct: q.answer, rank: rank };
+    if (choice === 'normal') return { key: 'missed', correct: q.answer, rank: rank };
+    return { key: 'other', correct: q.answer, rank: rank };
+  }
+
+  // ---------- 説明 ----------
+  function evidence(q) {
+    var f = q.features, out = [];
+    var names = ['萬子', '筒子', '索子'];
+    out.push({ k: '色の内訳', v: names[0] + ' ' + f.suit[0] + '枚 ／ ' + names[1] + ' ' + f.suit[1] + '枚 ／ ' + names[2] + ' ' + f.suit[2] + '枚 ／ 字牌 ' + f.honor + '枚' });
+    out.push({ k: '序盤3巡の中張牌', v: f.earlyMid + '枚' });
+    out.push({ k: '端牌と字牌', v: f.ends + '枚 ／ ' + f.total + '枚中' });
+    out.push({ k: '中張牌', v: f.mids + '枚 ／ ' + f.total + '枚中' });
+    out.push({ k: '同じ色の近い牌の並び', v: f.adjacency + '組' });
+    return out;
+  }
+
+  function why(q) {
+    var f = q.features, names = ['萬子', '筒子', '索子'];
+    if (q.answer === 'honitsu') {
+      // ★説明する色は、実際に染めていた色。最少色と食い違うことがある（2色とも少ないとき）
+      var ks = (q.keepSuit !== undefined) ? q.keepSuit : f.minSuitIndex;
+      var cnt = f.suit[ks], first = 0;
+      for (var i = 0; i < q.river.length; i++) if (q.river[i] < 27 && suitOf(q.river[i]) === ks) { first = i + 1; break; }
+      return names[ks] + 'が ' + cnt + '枚' + (cnt === 0 ? 'も' : 'しか') + '出ていません' +
+        (cnt > 0 ? '（出たのは' + first + '巡目）' : '') + '。' +
+        '他の色を先に処理しているので、' + names[ks] + 'で染めている可能性が高い河です。';
+    }
+    if (q.answer === 'chanta') {
+      var earlyEnd = 0;
+      for (var e = 0; e < Math.min(3, q.river.length); e++) if (isEnd(q.river[e])) earlyEnd++;
+      return '中張牌が早くから出ていて、端牌と字牌は ' + f.ends + '枚しか出ていません。' +
+        '端と字牌を手に残していると読めます。' +
+        (earlyEnd ? '<br>序盤に端牌や字牌も出ていますが、チャンタでも余った端牌は切ります。それだけでは否定できません。' : '');
+    }
+    if (q.answer === 'chiitoi') {
+      return '序盤に中張牌が ' + f.earlyMid + '枚出ていて、同じ色の近い牌の並びが ' + f.adjacency + '組しかありません。' +
+        '順子を作っていないので、河がバラバラになります。';
+    }
+    return '端牌と字牌から払っていて、色の偏りも、序盤の中張牌もありません。' +
+      'いちばんよくある手です。いつもどおりの安全度で考えて大丈夫です。';
+  }
+
+  var api = {
+    KINDS: KINDS, ORDER: ORDER, YAKU: YAKU,
+    stageOf: stageOf,
+    build: build,
+    features: features,
+    likelihood: likelihood,
+    posterior: posterior,
+    PRIOR: PRIOR,
+    buildRef: buildRef,
+    makeQuestion: makeQuestion,
+    judge: judge,
+    evidence: evidence,
+    why: why
+  };
+
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.Yomi = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script>
+'use strict';
+var T = Tiles, D = Drill, B = Betaori, Y = Yomi;
+
+var PER_SESSION = 10;
+
+var state = { course: null, i: 0, results: [], q: null, picked: null };
+
+// 前回の成績。コースごとに直近1件だけ残す
+function storeKey(c) { return 'mahjong-drill/last/' + c; }
+function loadLast(c) {
+  try { return JSON.parse(localStorage.getItem(storeKey(c)) || 'null'); } catch (e) { return null; }
+}
+function saveLast(c, v) {
+  try { localStorage.setItem(storeKey(c), JSON.stringify(v)); } catch (e) {}
+}
+
+// ---------- 部品 ----------
+
+function el(html) { var d = document.createElement('div'); d.innerHTML = html; return d.firstElementChild; }
+
+// ★手牌はできるだけ1列に収める。折り返すと「手牌」に見えないため。
+//   ただしスマホで牌が読めない大きさになるくらいなら、2段に折る。
+//   ピクセル値は使える幅から逆算する（各所に直書きしない）
+function usableWidth() {
+  var narrow = window.innerWidth < 560;
+  var w = Math.min(document.querySelector('.wrap').clientWidth, 940);
+  return w - (narrow ? 20 : 32) - (narrow ? 32 : 60) - (narrow ? 20 : 30);
+}
+// ★forceRow: 答えの手牌は形を見せるものなので、狭くても1列に置く（2026-09-11 指摘）
+function handLayout(n, gap, forceRow) {
+  var inner = usableWidth();
+  var rows = 1, per = n, tw;
+  while (true) {
+    per = Math.ceil(n / rows);
+    // ★牌の幅は切り捨てで決める。丸め上げると、最後の1枚だけ折り返す
+    tw = Math.floor((inner - (per - 1) * gap) / per);
+    if (forceRow || tw >= 31 || rows >= 3) break;
+    rows++;
+  }
+  tw = Math.max(forceRow ? 18 : 24, Math.min(58, tw));
+  return { size: tw / T.W, perRow: per, tileWidth: tw, width: per * tw + (per - 1) * gap };
+}
+function handTileSize(n, gap) { return handLayout(n, gap).size; }
+
+function tileBtn(idx, onClick, size) {
+  var b = document.createElement('button');
+  b.className = 'tilebtn';
+  b.innerHTML = T.svg(idx, { size: size || 1.4 });
+  b.setAttribute('aria-label', T.label(idx) + 'を切る');
+  b.onclick = function () { onClick(idx); };
+  return b;
+}
+
+function tileSpan(idx, size, stateName, badge) {
+  var s = document.createElement('span');
+  s.innerHTML = T.svg(idx, { size: size || 1, state: stateName });
+  if (badge) {
+    s.style.cssText = 'position:relative;display:inline-block';
+    s.appendChild(el('<span class="badge' + (badge >= 4 ? ' wall' : '') + '">' + badge + '</span>'));
+  }
+  return s;
+}
+// 見えている枚数が3以上なら、その数を返す（バッジ用）
+// ★端牌（1・9）と字牌には付けない。それらが4枚見えても壁にはならない（2026-09-11 指摘）
+function seenBadge(q, idx) {
+  if (!q || !q.visible) return 0;
+  if (idx >= 27) return 0;
+  var n = idx % 9;
+  if (n === 0 || n === 8) return 0;
+  var v = q.visible[idx];
+  return v >= 3 ? v : 0;
+}
+
+function tileRow(list, size) {
+  var d = document.createElement('div');
+  d.className = 'row';
+  list.forEach(function (x) {
+    var w = document.createElement('div');
+    w.style.textAlign = 'center';
+    w.innerHTML = T.svg(x.idx, { size: size || 1, state: x.state });
+    if (x.caption) {
+      var cap = document.createElement('div');
+      cap.style.cssText = 'font-size:13px;color:var(--fg2);margin-top:4px';
+      cap.textContent = x.caption;
+      w.appendChild(cap);
+    }
+    d.appendChild(w);
+  });
+  return d;
+}
+
+function handList(c) {
+  var out = [];
+  for (var i = 0; i < 34; i++) for (var k = 0; k < c[i]; k++) out.push(i);
+  return out;
+}
+
+function handRack(counts, gap, markTile, size) {
+  var list = handList(counts);
+  var g = gap || 3;
+  var lay = handLayout(list.length, g, true);
+  var sz = size || Math.min(1.05, lay.size);
+  var rk = el('<div class="rack thin"></div>');
+  var row = document.createElement('div');
+  row.className = 'row hand';
+  row.style.gap = g + 'px';
+  row.style.flexWrap = 'wrap';
+  row.style.maxWidth = (lay.perRow * Math.round(sz * T.W) + (lay.perRow - 1) * g) + 'px';
+  row.style.margin = '0 auto';
+  list.forEach(function (idx) {
+    row.appendChild(tileSpan(idx, sz, idx === markTile ? 'picked' : undefined));
+  });
+  rk.appendChild(row);
+  return rk;
+}
+
+function dots(colors) {
+  var d = document.createElement('div');
+  d.className = 'dots';
+  for (var i = 0; i < PER_SESSION; i++) {
+    var s = document.createElement('i');
+    if (colors[i]) s.style.background = colors[i];
+    d.appendChild(s);
+  }
+  return d;
+}
+
+function cardHead(rightHtml, colors) {
+  var head = el('<div class="head"></div>');
+  head.appendChild(el('<span>問 ' + (state.i + 1) + ' <span style="color:var(--fg3)">／ ' + PER_SESSION + '</span></span>'));
+  head.appendChild(dots(colors || []));
+  head.appendChild(el('<span>' + (rightHtml || '') + '</span>'));
+  return head;
+}
+
+function bars(rows, unit) {
+  var box = document.createElement('div');
+  var maxv = Math.max.apply(null, rows.map(function (r) { return r.v; }).concat([1]));
+  rows.forEach(function (r) {
+    var line = document.createElement('div');
+    line.className = 'cmp';
+    line.appendChild(tileSpan(r.tile, 1.1));
+    var lab = document.createElement('span');
+    lab.className = 'lab';
+    lab.textContent = r.lab;
+    line.appendChild(lab);
+    var tr = el('<div class="track"></div>');
+    var fl = el('<div class="fill"></div>');
+    fl.style.width = Math.round(r.v / maxv * 100) + '%';
+    fl.style.background = r.col;
+    fl.style.opacity = '.6';
+    tr.appendChild(fl); line.appendChild(tr);
+    var num = document.createElement('span');
+    num.className = 'num';
+    num.textContent = r.text || (r.v.toLocaleString() + (unit || ''));
+    line.appendChild(num);
+    box.appendChild(line);
+  });
+  return box;
+}
+
+// ★正解しても他の打牌の結果が見られること（CLAUDE.md 原則6）
+function allOptionsToggle(rows, note) {
+  var btn = el('<button class="act sm" style="margin-top:22px">すべての打牌を見る</button>');
+  var box = document.createElement('div');
+  box.hidden = true;
+  box.style.marginTop = '12px';
+  if (note) box.appendChild(el('<div class="note" style="margin:0 0 8px">' + note + '</div>'));
+  rows.forEach(function (r) {
+    var line = document.createElement('div');
+    line.style.cssText = 'display:flex;align-items:center;gap:12px;padding:5px 10px;border-radius:8px;' +
+      (r.bg ? 'background:' + r.bg + ';' : '');
+    line.appendChild(tileSpan(r.tile, 0.8));
+    var lab = document.createElement('span');
+    lab.style.cssText = 'font-size:14px;color:var(--fg2);width:74px;flex:none';
+    lab.textContent = r.lab || '';
+    line.appendChild(lab);
+    var mid = document.createElement('span');
+    mid.style.cssText = 'font-size:14px;flex:1;min-width:0;color:' + (r.midColor || 'var(--fg2)');
+    mid.innerHTML = r.mid || '';
+    line.appendChild(mid);
+    var v = document.createElement('span');
+    v.style.cssText = 'font-size:16px;font-weight:600;white-space:nowrap';
+    v.textContent = r.value;
+    line.appendChild(v);
+    box.appendChild(line);
+  });
+  btn.onclick = function () {
+    box.hidden = !box.hidden;
+    btn.textContent = box.hidden ? 'すべての打牌を見る' : '閉じる';
+  };
+  var wrap = document.createElement('div');
+  wrap.appendChild(btn);
+  wrap.appendChild(box);
+  return wrap;
+}
+
+function nextButton(onNext) {
+  var b = el('<button class="act primary" style="margin-top:24px">' +
+    (state.i + 1 >= PER_SESSION ? '結果を見る' : '次の問題') + '</button>');
+  b.onclick = onNext;
+  return b;
+}
+
+var app = document.getElementById('app');
+
+// ★画面の履歴。「戻る」は前の画面を読み取り専用で見せるだけで、状態は動かさない
+var screens = [], screenPos = -1;
+function render(node) {
+  screens = screens.slice(0, screenPos + 1);
+  screens.push(node);
+  screenPos = screens.length - 1;
+  show();
+}
+function show() {
+  var node = screens[screenPos];
+  var latest = screenPos === screens.length - 1;
+  app.innerHTML = '';
+  app.className = 'wrap' + (latest ? '' : ' readonly');
+  app.appendChild(navBar(latest));
+  app.appendChild(node);
+  window.scrollTo(0, 0);
+}
+function navBar(latest) {
+  var n = el('<div class="nav"></div>');
+  var back = el('<button>← 戻る</button>');
+  back.disabled = screenPos <= 0;
+  back.onclick = function () { if (screenPos > 0) { screenPos--; show(); } };
+  n.appendChild(back);
+  var fwd = el('<button>進む →</button>');
+  fwd.disabled = latest;
+  fwd.onclick = function () { if (!latest) { screenPos = screens.length - 1; show(); } };
+  n.appendChild(fwd);
+  if (!latest) n.appendChild(el('<span class="hint">前の画面を見ています（操作はできません）</span>'));
+  n.appendChild(el('<span class="spacer"></span>'));
+  var top = el('<button>トップ</button>');
+  top.onclick = function () { screens = []; screenPos = -1; screenStart(); };
+  n.appendChild(top);
+  return n;
+}
+
+// ---------- トップ ----------
+
+var COURSES = [
+  { id: 'kouritsu', name: '牌効率', live: true,
+    desc: 'どれを切ると、手が広くなるか。<br>正解は計算で決まりますので、運の入る余地はありません。' },
+  { id: 'betaori', name: '待ち読み', live: true,
+    desc: 'リーチの河から待ちを読んで、当たらない牌を切る。4万回振って放銃の回数を数えます。' },
+  { id: 'yomi', name: '手役読み', live: true,
+    desc: 'チートイ・ホンイツ・チャンタの気配を、河から読み分けます。' }
+];
+
+function screenStart() {
+  var c = el('<div class="card"></div>');
+
+  var hero = el('<div class="hero"></div>');
+  var rack = el('<div class="rack"></div>');
+  var row = document.createElement('div');
+  row.className = 'row hand';
+  // 役満の聴牌形を毎回ひとつ。並びに意味を持たせる（適当な牌を並べない）
+  var yaku = D.YAKUMAN_TENPAI[Math.floor(Math.random() * D.YAKUMAN_TENPAI.length)];
+  var deco = yaku.tiles;
+  var dlay = handLayout(deco.length, 4);
+  var sz = Math.min(1.25, dlay.size);
+  row.style.flexWrap = 'wrap';
+  row.style.maxWidth = (dlay.perRow * Math.round(sz * T.W) + (dlay.perRow - 1) * 4) + 'px';
+  row.style.margin = '0 auto';
+  deco.forEach(function (idx) { row.appendChild(tileSpan(idx, sz)); });
+  rack.appendChild(row);
+  hero.appendChild(rack);
+  hero.appendChild(el('<div class="note">' + yaku.name + '　' + yaku.wait + '</div>'));
+  hero.appendChild(el('<div class="title">麻雀ドリル</div>'));
+  hero.appendChild(el('<div class="sub">答えの出るところだけを、くり返し</div>'));
+  c.appendChild(hero);
+
+  COURSES.forEach(function (co) {
+    var d = el('<div class="course ' + (co.live ? 'live' : 'dim') + '"></div>');
+    var body = el('<div class="body"></div>');
+    body.appendChild(el('<div class="name">' + co.name + '</div>'));
+    body.appendChild(el('<div class="desc">' + co.desc + '</div>'));
+    var last = loadLast(co.id);
+    if (last) body.appendChild(el('<div style="font-size:13.5px;color:var(--fg3);margin-top:6px">前回　' + last.line + '</div>'));
+    d.appendChild(body);
+    if (co.live) {
+      var b = el('<button class="act primary">' + PER_SESSION + '問はじめる</button>');
+      b.onclick = function () { startCourse(co.id); };
+      d.appendChild(b);
+    } else {
+      d.appendChild(el('<span class="soon">準備中</span>'));
+    }
+    c.appendChild(d);
+  });
+
+  c.appendChild(el('<div class="note">「受け入れ」は、そのあとに引くと手が1歩進む牌の残り枚数の合計。' +
+    '「放銃」は、その牌でロンされることです。</div>'));
+  render(c);
+}
+
+function startCourse(id) {
+  state = { course: id, i: 0, results: [], q: null, picked: null };
+  nextQuestion();
+}
+
+function nextQuestion() {
+  if (state.i >= PER_SESSION) return screenSummary();
+  if (state.course === 'kouritsu') return q1Start();
+  if (state.course === 'betaori') return q2Start();
+  return q3Start();
+}
+
+function pushResult(r) { state.results.push(r); }
+function dotColors() { return state.results.map(function (r) { return r.color; }); }
+
+function afterAnswer() { state.i++; nextQuestion(); }
+
+// ---------- まとめ ----------
+
+function screenSummary() {
+  var r = state.results;
+  var c = el('<div class="card"></div>');
+  c.appendChild(el('<h1>' + PER_SESSION + '問、おつかれさまでした</h1>'));
+
+  var stats, msg, line;
+  if (state.course === 'kouritsu') {
+    var bestN = r.filter(function (x) { return x.key === 'best'; }).length;
+    var backN = r.filter(function (x) { return x.key === 'back'; }).length;
+    var counted = r.filter(function (x) { return x.lossRel !== null && x.lossRel !== undefined; });
+    var avg = counted.length ? Math.round(counted.reduce(function (a, x) { return a + x.lossRel; }, 0) / counted.length * 100) : '—';
+    stats = [
+      ['最善だった問題', bestN + ' / ' + r.length],
+      ['最善より狭めた割合<br><span style="font-size:12.5px">（2手先まで・戻しを除く）</span>', avg + '<span style="font-size:16px">%</span>'],
+      ['シャンテン戻し', backN + '<span style="font-size:16px">回</span>']
+    ];
+    msg = backN > 0
+      ? 'シャンテン戻しが ' + backN + ' 回ありました。ここは受け入れの広さ以前のところですので、まずこれを0にするのを目標にしてみてください。'
+      : (bestN >= r.length * 0.7 ? '受け入れの広い一打を、安定して選べています。'
+        : '最善を外した問題は、何が効かなくなったかを見直しておくと、早く身につきますよ。');
+    line = '最善 ' + bestN + '/' + r.length + '・狭めた割合 ' + avg + '%・戻し ' + backN + '回';
+  } else if (state.course === 'betaori') {
+    var beta = r.filter(function (x) { return x.safest; }).length;
+    var muda = r.filter(function (x) { return x.breaksDanger; }).length;
+    var push = r.filter(function (x) { return x.key === 'shoubu' || x.key === 'bouhai' || x.key === 'hikaeme'; }).length;
+    var lossAvg = (r.reduce(function (a, x) { return a + x.lossPP; }, 0) / r.length).toFixed(1);
+    stats = [
+      ['最も当たりにくい牌を選べた', beta + ' / ' + r.length],
+      ['1問あたり余分に払った危険', lossAvg + '<span style="font-size:16px">ポイント</span>'],
+      ['形を崩して危険牌', muda + '<span style="font-size:16px">回</span>']
+    ];
+    msg = muda > 0
+      ? '形を崩したうえに危険牌を切った一打が ' + muda + ' 回ありました。降りるなら安全側の牌、押すなら形を残す牌があったはずです。まずここを0にしてみてください。'
+      : (push >= 4 ? '押している回数が ' + push + ' 回あります。判定はしませんが、ご自分の癖として覚えておいてください。'
+        : '危険度の低い牌を、落ち着いて選べています。');
+    line = '最安全 ' + beta + '/' + r.length + '・余分な危険 ' + lossAvg + 'pt・崩して危険牌 ' + muda + '回';
+  } else {
+    var hit = r.filter(function (x) { return x.key === 'hit'; }).length;
+    var falseAlarm = r.filter(function (x) { return x.key === 'falseAlarm'; }).length;
+    var missed = r.filter(function (x) { return x.key === 'missed'; }).length;
+    stats = [
+      ['当たった', hit + ' / ' + r.length],
+      ['疑いすぎ', falseAlarm + '<span style="font-size:16px">回</span>'],
+      ['見逃し', missed + '<span style="font-size:16px">回</span>']
+    ];
+    msg = falseAlarm > missed
+      ? '疑いすぎが多めです。色が少し偏っただけで染め手を警戒すると、安全牌を無駄に抱えて手が潰れます。'
+      : (missed > 0 ? '見逃しがありました。河の色の偏りと、序盤に出た中張牌を見直してみてください。'
+        : '河の気配を、よく読み取れています。');
+    line = '正解 ' + hit + '/' + r.length + '・疑いすぎ ' + falseAlarm + '・見逃し ' + missed;
+  }
+
+  saveLast(state.course, { line: line, at: Date.now() });
+
+  var g = document.createElement('div');
+  g.className = 'statgrid';
+  stats.forEach(function (s) {
+    g.appendChild(el('<div class="stat"><div class="k">' + s[0] + '</div><div class="v">' + s[1] + '</div></div>'));
+  });
+  c.appendChild(g);
+  c.appendChild(el('<p>' + msg + '</p>'));
+
+  var bar = el('<div style="display:flex;gap:10px;flex-wrap:wrap"></div>');
+  var b1 = el('<button class="act primary">もう' + PER_SESSION + '問</button>');
+  b1.onclick = function () { startCourse(state.course); };
+  bar.appendChild(b1);
+  var b2 = el('<button class="act">トップへ</button>');
+  b2.onclick = screenStart;
+  bar.appendChild(b2);
+  c.appendChild(bar);
+  render(c);
+}
+</script>
+<script id="mod-course-kouritsu">
+// 牌効率コースの画面。app.html の共通部品を使う
+(function () {
+  'use strict';
+
+  var VERDICT = {
+    best: { label: '最善', color: 'var(--ok)', line: 'この手でいちばん受け入れの広い一打です。よく見えていますね。' },
+    close: { label: '惜しい', color: 'var(--warn)', line: '' },
+    lose: { label: '損', color: 'var(--warn)', line: '' },
+    back: { label: 'シャンテン戻し', color: 'var(--bad)', line: '聴牌までの距離が1つのびてしまいます。ここは避けたいところですね。' }
+  };
+  var STEPS = ['最善', '惜しい', '損', 'シャンテン戻し'];
+
+  // ★問題は Worker で先に作っておく（2026-09-12）。1問あたり約1秒の計算を、解いている間に裏で回す。
+  //   Worker が作れない環境（data: URL など）では、従来どおりその場で計算する
+  var pool = [], worker = null, workerBusy = false, waiting = null;
+  function makeWorker() {
+    try {
+      var e = document.getElementById('mod-engine'), d = document.getElementById('mod-drill');
+      if (!e || !d || !window.Worker || !window.Blob || !window.URL) return null;
+      var src = e.textContent + '\n' + d.textContent +
+        '\nself.onmessage = function () { postMessage(Drill.makeQuestion()); };';
+      return new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+    } catch (err) { return null; }
+  }
+  function deliver(q) {
+    var cb = waiting; waiting = null;
+    if (cb) cb(q); else if (q) pool.push(q);
+  }
+  function prefetch() {
+    if (pool.length || workerBusy) return;
+    if (worker === null) worker = makeWorker() || false;
+    if (!worker) return;
+    workerBusy = true;
+    worker.onmessage = function (ev) { workerBusy = false; deliver(ev.data); };
+    worker.onerror = function () { workerBusy = false; worker = false; deliver(D.makeQuestion()); };
+    worker.postMessage(1);
+  }
+  function getQuestion(cb) {
+    if (pool.length) { cb(pool.shift()); prefetch(); return; }
+    if (worker === null) worker = makeWorker() || false;
+    if (worker) {
+      waiting = cb; prefetch();
+      // Worker が黙って止まる環境への保険。返事が無ければその場で計算に切り替える
+      setTimeout(function () { if (waiting === cb) { worker = false; workerBusy = false; deliver(D.makeQuestion()); } }, 8000);
+      return;
+    }
+    setTimeout(function () { cb(D.makeQuestion()); }, 30);
+  }
+  // トップ画面にいる間に1問目を作っておく
+  setTimeout(prefetch, 500);
+
+  window.q1Start = function () {
+    var c0 = el('<div class="card"></div>');
+    c0.appendChild(cardHead('', dotColors()));
+    c0.appendChild(el('<div class="calc">手を配って、2手先まで数えています…</div>'));
+    render(c0);
+    getQuestion(function (q) {
+      if (!q) { alert('問題をうまく作れませんでした。'); return screenStart(); }
+      state.q = q;
+      screens.pop(); screenPos--;
+      showQuestion();
+      prefetch();   // 解いている間に次の問題を作る
+    });
+  };
+
+  function showQuestion() {
+    var q = state.q;
+
+    var c = el('<div class="card"></div>');
+    c.appendChild(cardHead(q.best.shanten + 'シャンテン <span style="color:var(--fg3)">（聴牌まであと' + q.best.shanten + '歩）</span>', dotColors()));
+    c.appendChild(el('<div style="font-size:20px;margin-bottom:14px">切る牌を選んでくださいね</div>'));
+
+    var rack = el('<div class="rack"></div>');
+    var row = document.createElement('div');
+    row.className = 'row hand';
+    var tiles = handList(q.hand);
+    var lay = handLayout(tiles.length, 4);
+    row.style.flexWrap = 'wrap';
+    row.style.maxWidth = lay.width + 'px';
+    row.style.margin = '0 auto';
+    tiles.forEach(function (idx) { row.appendChild(tileBtn(idx, onPick, lay.size)); });
+    rack.appendChild(row);
+    c.appendChild(rack);
+    c.appendChild(el('<div class="note">受け入れがいちばん広くなる一打をさがします。役や点数はここでは考えません。</div>'));
+    render(c);
+  };
+
+  function onPick(idx) {
+    var q = state.q, v = D.judge(q, idx);
+    var meta = VERDICT[v.key];
+    pushResult({ key: v.key, loss: v.loss, lossRel: v.lossRel, color: meta.color });
+    feedback(idx, v);
+  }
+
+  function feedback(picked, v) {
+    var q = state.q, b = q.best, mine = v.mine;
+    var meta = VERDICT[v.key];
+    var c = el('<div class="card"></div>');
+    c.appendChild(cardHead('', dotColors()));
+
+    var headline = meta.line;
+    if (!headline) {
+      if (v.loss > 0) {
+        headline = '最善の一打にくらべて、引ける牌が <b>' + v.loss + '枚</b> 少なくなります。';
+      } else {
+        // ★枚数は同じか多いのに負ける＝その先の形。進むツモの後が狭いか、良くなるツモが少ない
+        headline = '引ける牌の枚数は' + (v.loss === 0 ? '同じ' : 'むしろ多い') + 'のですが、<b>その先の形</b>で負けます' +
+          '（ツモった後の手の良さ ' + Math.round(mine.score2) + '点 対 ' + Math.round(b.score2) + '点）。';
+      }
+    }
+    var top = document.createElement('div');
+    top.style.cssText = 'display:flex;gap:22px;align-items:center';
+    top.appendChild(tileSpan(picked, 1.6, 'picked'));
+    top.appendChild(el('<div><div class="verdict" style="color:' + meta.color + '">' + meta.label + '</div>' +
+      '<div style="margin-top:4px">' + headline + '</div></div>'));
+    c.appendChild(top);
+
+    var sc = document.createElement('div');
+    sc.className = 'scale';
+    STEPS.forEach(function (s, i) {
+      var d = el('<div>' + s + '</div>');
+      if (i === v.step) {
+        d.style.background = i === 0 ? 'var(--ok-bg)' : i === 3 ? 'var(--bad-bg)' : 'var(--warn-bg)';
+        d.style.color = meta.color;
+        d.style.fontWeight = '600';
+      }
+      sc.appendChild(d);
+    });
+    c.appendChild(sc);
+
+    // 枚数の比較は同じシャンテン数の中でだけ行う（CLAUDE.md 原則7）
+    var same = q.analysis.filter(function (x) { return x.shanten === b.shanten; });
+    var worstSame = same[same.length - 1];
+    var back = mine.shanten > b.shanten;
+
+    if (back) {
+      c.appendChild(el('<div class="callout bad">最善なら聴牌まであと <b>' + b.shanten + '歩</b>、この一打では <b>' + mine.shanten + '歩</b> になります。<br>' +
+        'このとき引ける牌の枚数は<b>むしろ増えます</b>。手が後ろに下がったぶん進む牌が増えているだけですので、枚数で比べても意味がありません。</div>'));
+    }
+
+    c.appendChild(el('<div class="sect">切ったあとの手牌</div>'));
+    if (v.key === 'best') {
+      c.appendChild(handRack(minus(q.hand, b.discard), 3, -1));
+    } else {
+      c.appendChild(el('<div class="racklabel" style="color:var(--warn)">あなた　' + T.label(mine.discard) + 'を切って、' + T.label(b.discard) + 'を残した形</div>'));
+      c.appendChild(handRack(minus(q.hand, mine.discard), 3, b.discard));
+      c.appendChild(el('<div class="racklabel" style="color:var(--ok);margin-top:12px">最善　' + T.label(b.discard) + 'を切って、' + T.label(mine.discard) + 'を残した形</div>'));
+      c.appendChild(handRack(minus(q.hand, b.discard), 3, mine.discard));
+    }
+
+    c.appendChild(el('<div class="sect">切ったあと、手が進む牌の枚数' +
+      (back ? '<span style="color:var(--fg3)">（' + b.shanten + 'シャンテンを保てる一打どうしの比較）</span>' : '') + '</div>'));
+    function nextTxt(o) { return (o.avgNext !== undefined) ? '<br><span style="font-size:12.5px;color:var(--fg3)">その先 平均' + o.avgNext.toFixed(1) + '枚</span>' : ''; }
+    var rows = [{ tile: b.discard, lab: '最善', v: b.count, col: 'var(--ok)', text: b.count + '枚' }];
+    if (!back && mine.discard !== b.discard) rows.push({ tile: mine.discard, lab: 'あなた', v: mine.count, col: 'var(--warn)', text: mine.count + '枚' });
+    if (worstSame && worstSame.discard !== b.discard && (back || worstSame.discard !== mine.discard)) {
+      rows.push({ tile: worstSame.discard, lab: 'もっとも狭い', v: worstSame.count, col: 'var(--bad)', text: worstSame.count + '枚' });
+    }
+    c.appendChild(bars(rows));
+    // ★待ちの甲乙。2手先の広さを並べる
+    if (!back) {
+      var nx = [{ o: b, lab: '最善' }];
+      if (mine.discard !== b.discard) nx.push({ o: mine, lab: 'あなた' });
+      if (q.disagree && q.best1.discard !== b.discard && q.best1.discard !== mine.discard) nx.push({ o: q.best1, lab: '枚数だけなら最多' });
+      // ★ツモった後の手の良さ（状態価値）。進むツモも、進まないが良くなるツモも、同じ物差しに乗る
+      c.appendChild(el('<div class="sect">ツモった後の手の良さ（全部のツモの平均）</div>'));
+      c.appendChild(el('<div class="note" style="margin:-6px 0 10px">1回ツモって最善の牌を切った後の手を点数にして、全34種のツモで平均したもの。' +
+        '聴牌なら1000点＋待ち枚数×10、1シャンテンなら500点＋受け入れ×5、2シャンテンなら250点＋受け入れ×2.5。' +
+        '<b>手が進むツモ</b>も、<b>進まないが形が良くなるツモ</b>（カンチャンが両面に置き換わる等）も、ここに入ります。</div>'));
+      c.appendChild(bars(nx.map(function (x) {
+        return { tile: x.o.discard, lab: x.lab, v: x.o.score2 || 0,
+          col: x.o.discard === b.discard ? 'var(--ok)' : 'var(--warn)', text: Math.round(x.o.score2 || 0) + '点' };
+      })));
+      // 内訳: 進むツモの後の広さ ／ 良くなるツモの枚数
+      var brk = el('<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 18px;margin-top:6px;font-size:14px;color:var(--fg2)"></div>');
+      nx.forEach(function (x) {
+        brk.appendChild(el('<div><b style="color:var(--fg)">' + T.label(x.o.discard) + '切り</b>　進むツモ ' + x.o.count + '枚（その後の受け入れ 平均' + (x.o.avgNext || 0).toFixed(1) + '枚）' +
+          '<br>　　良くなるツモ ' + (x.o.improveTiles || 0) + '枚（平均 +' + (x.o.improveGain || 0).toFixed(1) + '枚）</div>'));
+      });
+      c.appendChild(brk);
+      // ★具体例。何をツモると次が何枚になるか、広い順と狭い順から2つずつ
+      function examples(discard, label) {
+        var h13 = minus(q.hand, discard);
+        var ev = Engine.evaluate(h13, null, true);
+        var det = ev.advDetail.slice().sort(function (x, y) { return y.next - x.next || y.left - x.left; });
+        var imp = ev.improveDetail.slice().sort(function (x, y) { return (y.to - y.from) - (x.to - x.from) || y.left - x.left; });
+        if (!det.length && !imp.length) return;
+        c.appendChild(el('<div class="racklabel" style="margin-top:12px">' + label + '　' + T.label(discard) + 'を切った場合</div>'));
+        var ex = el('<div style="display:flex;flex-wrap:wrap;gap:6px 18px"></div>');
+        var picks = det.length >= 3 ? [det[0], det[det.length - 1]] : det;
+        picks.forEach(function (d) {
+          var item = el('<div style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--fg2)"></div>');
+          item.appendChild(tileSpan(d.draw, 0.72));
+          item.appendChild(el('<span>をツモ → ' + T.label(d.thenDiscard) + '切りで ' +
+            (d.nextShanten === 0 ? '<b style="color:var(--ok)">聴牌</b>、待ち <b style="color:var(--fg)">' + d.next + '枚</b>' : '<b style="color:var(--ok)">1歩進む</b>。次は ' + d.next + '枚') + '</span>'));
+          ex.appendChild(item);
+        });
+        imp.slice(0, 2).forEach(function (d) {
+          var item = el('<div style="display:flex;align-items:center;gap:6px;font-size:14px;color:var(--fg2)"></div>');
+          item.appendChild(tileSpan(d.draw, 0.72));
+          item.appendChild(el('<span>をツモ → ' + T.label(d.thenDiscard) + '切りで <b style="color:var(--warn)">形が良くなる</b>。受け入れ ' + d.from + '枚→<b style="color:var(--fg)">' + d.to + '枚</b></span>'));
+          ex.appendChild(item);
+        });
+        c.appendChild(ex);
+      }
+      examples(b.discard, '最善');
+      if (mine.discard !== b.discard) examples(mine.discard, 'あなた');
+
+      // ★役の芽（タンヤオ）。判定には入れない。素人には大きい判断材料なので添える
+      function tanyaoReady(discard) {
+        var h13 = minus(q.hand, discard);
+        for (var i = 0; i < 34; i++) if (h13[i] && (i >= 27 || i % 9 === 0 || i % 9 === 8)) return false;
+        return true;
+      }
+      var tB = tanyaoReady(b.discard), tM = tanyaoReady(mine.discard);
+      if (tB !== tM) {
+        var tTile = tB ? b.discard : mine.discard, other = tB ? mine.discard : b.discard;
+        c.appendChild(el('<div class="callout ' + (tB ? 'ok' : 'warn') + '">役の芽：<b>' + T.label(tTile) + '切りならタンヤオが見えます</b>（1・9・字牌が手から消える）。' +
+          T.label(other) + '切りだと1・9牌が残ります。この判定は受け入れの計算に入れていません。役を取るかは、あなたの判断です。</div>'));
+      }
+      if (q.disagree) {
+        c.appendChild(el('<div class="callout warn">枚数だけなら <b>' + T.label(q.best1.discard) + '</b> のほうが広い（' + q.best1.count + '枚 対 ' + b.count + '枚）のですが、' +
+          'その先で両面になりやすいのは <b>' + T.label(b.discard) + '</b> です。受け入れは枚数だけでなく、<b>その先の形</b>まで見ます。</div>'));
+      }
+    }
+
+    // ★種類が多いときは1枚ごとの枚数を出さない。答えを配りすぎになる
+    var many = b.tiles.length > 10;
+    c.appendChild(el('<div class="sect" style="display:flex;justify-content:space-between;align-items:baseline">' +
+      '<span>' + T.label(b.discard) + 'を切った後、ツモると手が進む牌</span>' +
+      '<span style="color:var(--fg2)">' + b.tiles.length + '種類 ／ 合計 <b style="color:var(--fg);font-size:17px">' + b.count + '枚</b></span></div>'));
+    var bestSet = {};
+    b.tiles.forEach(function (t) { bestSet[t.tile] = t.left; });
+    c.appendChild(tileRow(b.tiles.map(function (t) {
+      return { idx: t.tile, caption: many ? null : t.left + '枚' };
+    }), many ? 0.86 : 1));
+
+    if (v.key !== 'best' && !back) {
+      var mineSet = {};
+      mine.tiles.forEach(function (t) { mineSet[t.tile] = t.left; });
+      var lost = b.tiles.filter(function (t) { return !mineSet[t.tile]; });
+      var gained = mine.tiles.filter(function (t) { return !bestSet[t.tile]; });
+      var box = el('<div class="callout bad"></div>');
+      if (lost.length) {
+        box.appendChild(el('<div>' + T.label(mine.discard) + 'を切ると、このうち次の牌が効かなくなってしまいます</div>'));
+        box.appendChild(tileRow(lost.map(function (t) { return { idx: t.tile, caption: t.left + '枚' }; }), 0.95));
+      } else {
+        box.appendChild(el('<div>効かなくなる牌はありませんが、引ける牌の枚数が減ります。</div>'));
+      }
+      if (gained.length) {
+        box.appendChild(el('<div style="margin-top:13px">代わりに増えるのは、これだけです</div>'));
+        box.appendChild(tileRow(gained.map(function (t) { return { idx: t.tile, caption: t.left + '枚' }; }), 0.95));
+      }
+      c.appendChild(box);
+    }
+
+    c.appendChild(allOptionsToggle(q.analysis.map(function (a) {
+      var isB = a.discard === b.discard, isM = a.discard === mine.discard;
+      return {
+        tile: a.discard,
+        lab: isB ? '最善' : isM ? 'あなた' : '',
+        mid: a.shanten > b.shanten
+          ? '聴牌から1歩遠のきます（' + a.shanten + 'シャンテンに戻る）'
+          : a.shanten + 'シャンテンのまま' + (a.avgNext !== undefined ? '　その先 平均' + a.avgNext.toFixed(1) + '枚' : ''),
+        midColor: a.shanten > b.shanten ? 'var(--bad)' : 'var(--fg2)',
+        value: a.count + '枚',
+        bg: isB ? 'var(--ok-bg)' : (isM ? 'var(--warn-bg)' : '')
+      };
+    }), '「◯枚」は、その牌を切った後にツモると手が1歩進む牌の残り枚数の合計です。' +
+      '聴牌から遠のく行は、枚数がむしろ増えるので、同じ行どうしで比べないでください。'));
+
+    c.appendChild(nextButton(afterAnswer));
+    render(c);
+  }
+
+  function minus(counts, tile) {
+    var h = counts.slice(); h[tile]--; return h;
+  }
+})();
+
+</script>
+<script id="mod-course-betaori">
+// ベタオリコースの画面。app.html の共通部品を使う
+(function () {
+  'use strict';
+
+  // ★2軸の言い分け。安全牌＝浮いている安全牌を切る／ベタオリ＝形を崩して安全牌を切る／
+  //   ただの損＝形を崩したうえに危険牌。順子を崩してスジを切るのは損ではない
+  // ★目盛りは危険の度合い。形を崩したかは別の注記（2026-09-11）
+  var STANCE = {
+    anzen:   { label: '安全牌',       color: 'var(--ok)',   bg: 'var(--ok-bg)',   desc: '最も安全な牌とほぼ同じ。形も崩れていない' },
+    betaori: { label: 'ベタオリ',     color: 'var(--ok)',   bg: 'var(--ok-bg)',   desc: '安全側の牌を、形を崩して切った。正しい降り方' },
+    mawashi: { label: '回し',         color: 'var(--warn)', bg: 'var(--warn-bg)', desc: '少し危険だが、形は残した' },
+    hikaeme: { label: '控えめな勝負', color: 'var(--warn)', bg: 'var(--warn-bg)', desc: '無スジだが暴牌ではない。危険牌の中では低いほう' },
+    shoubu:  { label: '勝負',         color: 'var(--bad)',  bg: 'var(--bad-bg)',  desc: '危険牌。見合う手のときだけ' },
+    bouhai:  { label: '暴牌',         color: 'var(--bad)',  bg: 'var(--bad-bg)',  desc: 'この手でいちばん当たる牌、またはそれに近い' }
+  };
+  var STEP_KEYS = ['anzen', 'betaori', 'mawashi', 'hikaeme', 'shoubu', 'bouhai'];
+
+  // ★河は6枚で折り返す。宣言牌は横向きに置くので、回した分の場所を先に確保する
+  function riverBlock(q, withBadges) {
+    var size = window.innerWidth < 560 ? 0.72 : 0.95;
+    var w = Math.round(T.W * size), h = Math.round(T.H * size), gap = 4;
+    var rk = el('<div class="rack"></div>');
+    var row = el('<div class="river"></div>');
+    row.style.maxWidth = (w * 6 + gap * 5 + (h - w)) + 'px';
+    row.style.gap = gap + 'px';
+    q.river.forEach(function (t, i) {
+      var isReach = i === q.reachIndex;
+      var isTedashi = i === q.tedashiIndex;
+      var wrap = document.createElement('span');
+      var inner = document.createElement('span');
+      inner.innerHTML = T.svg(t, { size: size, state: isTedashi ? 'worst' : undefined });
+      var bg = withBadges ? seenBadge(q, t) : 0;
+      if (bg && !isReach) {
+        inner.style.cssText = 'position:relative;display:inline-block';
+        inner.appendChild(el('<span class="badge' + (bg >= 4 ? ' wall' : '') + '">' + bg + '</span>'));
+      }
+      if (isReach) {
+        wrap.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;' +
+          'width:' + h + 'px;height:' + w + 'px;flex:none';
+        inner.style.cssText = 'display:block;transform:rotate(90deg)';
+      } else {
+        wrap.style.cssText = 'display:inline-flex;flex:none';
+      }
+      wrap.appendChild(inner);
+      row.appendChild(wrap);
+    });
+    rk.appendChild(row);
+    return rk;
+  }
+
+  // 他家の河に見えている牌（壁の材料）
+  function otherSeen(q, withBadges) {
+    var list = [];
+    for (var t = 0; t < 34; t++) for (var k = 0; k < (q.otherDiscards ? q.otherDiscards[t] : 0); k++) list.push(t);
+    if (!list.length) return null;
+    var box = el('<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px"></div>');
+    box.appendChild(el('<span style="font-size:14px;color:var(--fg2);flex:none">他家の河に見えている牌</span>'));
+    var row = el('<div class="row" style="gap:3px"></div>');
+    list.forEach(function (t) { row.appendChild(tileSpan(t, 0.68, undefined, withBadges ? seenBadge(q, t) : 0)); });
+    box.appendChild(row);
+    return box;
+  }
+
+  function situationLine(q) {
+    return el('<div style="font-size:17px;color:var(--bad);font-weight:600;margin-bottom:8px">' +
+      q.seatName + '（' + B.tileName(q.theirWind) + '家）がリーチ　' + q.turn + '巡目</div>');
+  }
+
+  window.q2Start = function () {
+    var c = el('<div class="card"></div>');
+    c.appendChild(cardHead('', dotColors()));
+    c.appendChild(el('<div class="calc">局面を作って、放銃の回数を数えています…</div>'));
+    render(c);
+    setTimeout(function () {
+      var q = B.makeQuestion();
+      if (!q) { alert('局面をうまく作れませんでした。'); return screenStart(); }
+      state.q = q;
+      // 履歴に「計算中」を残さない
+      screens.pop(); screenPos--;
+      showQuestion();
+    }, 30);
+  };
+
+  function showQuestion() {
+    var q = state.q;
+    var c = el('<div class="card"></div>');
+    c.appendChild(cardHead('東1局　あなたは<b style="color:var(--fg)">' + B.tileName(q.mySeat) + '家</b>', dotColors()));
+    c.appendChild(situationLine(q));
+    c.appendChild(riverBlock(q));
+    c.appendChild(el('<div class="note" style="margin-top:8px">赤い枠は手出し。横向きがリーチ宣言牌。</div>'));
+    var os = otherSeen(q); if (os) c.appendChild(os);
+
+    c.appendChild(el('<div style="font-size:20px;margin:22px 0 12px">切る牌を選んでくださいね</div>'));
+    var rack = el('<div class="rack"></div>');
+    var row = document.createElement('div');
+    row.className = 'row hand';
+    var tiles = handList(q.hand);
+    var lay = handLayout(tiles.length, 4);
+    row.style.flexWrap = 'wrap';
+    row.style.maxWidth = lay.width + 'px';
+    row.style.margin = '0 auto';
+    tiles.forEach(function (idx) { row.appendChild(tileBtn(idx, onPick, lay.size)); });
+    rack.appendChild(row);
+    c.appendChild(rack);
+    render(c);
+  }
+
+  function onPick(idx) {
+    var q = state.q, v = B.judge(q, idx);
+    var meta = STANCE[v.key];
+    pushResult({ key: v.key, lossPP: v.lossPP, color: meta.color, safest: v.safest, breaksDanger: v.breaks && !v.safeish });
+    feedback(idx, v);
+  }
+
+  function optionOf(q, tile) {
+    for (var i = 0; i < q.options.length; i++) if (q.options[i].tile === tile) return q.options[i];
+    return null;
+  }
+
+  // 回答後の手牌。各牌の下に放銃回数を添え、選んだ牌と最安全牌に枠を付ける
+  function handWithCounts(q, picked, onTile) {
+    var list = handList(q.hand);
+    var lay = handLayout(list.length, 4);
+    var rk = el('<div class="rack"></div>');
+    var row = document.createElement('div');
+    row.className = 'row hand';
+    row.style.cssText = 'flex-wrap:wrap;gap:4px;max-width:' + lay.width + 'px;margin:0 auto;align-items:flex-start';
+    list.forEach(function (idx) {
+      var o = optionOf(q, idx);
+      var w = document.createElement(onTile ? 'button' : 'div');
+      if (onTile) { w.type = 'button'; w.className = 'tilebtn'; w.onclick = function () { onTile(o); }; }
+      w.style.cssText = 'text-align:center;width:' + lay.tileWidth + 'px;transition:none';
+      var st = idx === picked ? 'picked' : (idx === q.safest.tile ? 'best' : (idx === q.riskiest.tile ? 'worst' : undefined));
+      w.innerHTML = T.svg(idx, { size: lay.size, state: st });
+      var bg = seenBadge(q, idx);
+      if (bg) {
+        var fs0 = w.firstChild; var wrapB = document.createElement('span');
+        wrapB.style.cssText = 'position:relative;display:inline-block';
+        wrapB.appendChild(fs0); wrapB.appendChild(el('<span class="badge' + (bg >= 4 ? ' wall' : '') + '">' + bg + '</span>'));
+        w.insertBefore(wrapB, w.firstChild);
+      }
+      var cap = document.createElement('div');
+      cap.style.cssText = 'font-size:12px;color:#f4f2ea;margin-top:3px;line-height:1.2;font-variant-numeric:tabular-nums';
+      cap.textContent = o ? o.hits.toLocaleString() : '';
+      w.appendChild(cap);
+      row.appendChild(w);
+    });
+    rk.appendChild(row);
+    return rk;
+  }
+
+  // 当たる形の1行。河の牌が残した形なら、その捨て牌を薄く並べて「4 45」のように見せる
+  function shapeLine(o, origin, q) {
+    if (q && o.dead === null && o.type !== '単騎' && o.type !== 'シャンポン') {
+      o.thin = o.kept.filter(function (k) { return q.visible[k] === 3; });
+    }
+    var line = el('<div class="shape"></div>');
+    if (o.dead !== null) line.style.opacity = '.5';
+    var g = document.createElement('span');
+    g.style.cssText = 'display:flex;gap:3px;align-items:center;width:118px;flex:none';
+    var seq = o.kept.slice();
+    if (origin) seq.push(origin.discard);
+    seq.sort(function (a, b) { return a - b; });
+    var dimmed = false;   // 捨て牌と同じ牌が残りにもある場合、薄くするのは1枚だけ
+    seq.forEach(function (k) {
+      var sp = tileSpan(k, 0.8);
+      if (origin && !dimmed && k === origin.discard) { sp.style.cssText = 'opacity:.38;filter:grayscale(.4)'; dimmed = true; }
+      g.appendChild(sp);
+    });
+    line.appendChild(g);
+    line.appendChild(el('<span class="arrow">→</span>'));
+    var w = document.createElement('span');
+    w.style.cssText = 'display:flex;gap:3px;width:84px;flex:none';
+    o.waits.forEach(function (x) { w.appendChild(tileSpan(x, 0.8)); });
+    line.appendChild(w);
+    var note;
+    if (o.dead !== null) {
+      note = o.deadBy === 'wall'
+        ? '<span style="color:var(--ok)">消滅　' + T.label(o.dead) + 'が4枚見えているので、この形は作れません（壁）</span>'
+        : '<span style="color:var(--ok)">消滅　' + T.label(o.dead) + 'が河にあるので和了れません</span>';
+    } else if (origin) {
+      note = '<b style="color:var(--bad)">' + origin.name + '</b>　<span style="color:var(--fg3)">' +
+        origin.turn + '巡目に' + T.label(origin.discard) + 'を切って、この形が残った</span>';
+    } else {
+      note = o.type;
+    }
+    if (o.dead === null && o.thin && o.thin.length) {
+      note += '　<span style="color:#5b3fa6">残り1枚（' + o.thin.map(T.label).join('・') + 'が3枚見え）</span>';
+    }
+    line.appendChild(el('<span style="font-size:13.5px;color:var(--fg2);line-height:1.4">' + note + '</span>'));
+    return line;
+  }
+
+  function sameSet(a, b) {
+    if (a.length !== b.length) return false;
+    var x = a.slice().sort(), y = b.slice().sort();
+    for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
+    return true;
+  }
+
+  function feedback(picked, v) {
+    var q = state.q, s = q.safest, mine = v.mine, r = q.riskiest;
+    var meta = STANCE[v.key];
+    var c = el('<div class="card"></div>');
+    c.appendChild(cardHead('東1局　あなたは<b style="color:var(--fg)">' + B.tileName(q.mySeat) + '家</b>', dotColors()));
+
+    // 判定
+    var headline;
+    if (v.key === 'anzen' || v.key === 'betaori') {
+      headline = (v.safest ? 'この手でいちばん当たりにくい一打です。'
+        : v.isSafe ? '当たりにくい牌です（いちばん安全な' + T.label(s.tile) + 'との差は ' + v.lossPP.toFixed(1) + 'ポイント）。'
+        : '安全側の牌です。ただし、いちばん安全な' + T.label(s.tile) + 'より ' + v.lossPP.toFixed(1) + 'ポイント当たりやすい。') +
+        (v.key === 'betaori' ? '<br><span style="font-size:15px;color:var(--fg2)">形は崩れますが、降りると決めたなら正しい一打です。</span>'
+                              : '<br><span style="font-size:15px;color:var(--fg2)">形も崩れていません。</span>');
+    } else {
+      var ratio = s.rate > 0 ? (mine.rate / s.rate) : 0;
+      headline = T.label(s.tile) + 'を切る場合の <b>' +
+        (ratio >= 2 ? ratio.toFixed(1) + '倍' : '+' + v.lossPP.toFixed(1) + 'ポイント') + '</b> の危険があります。';
+      if (v.key === 'hikaeme') headline += '<br><span style="font-size:15px;color:var(--fg2)">危険牌の中では低いほう。押すなら、こういう牌から。</span>';
+      if (v.key === 'bouhai') headline += '<br><span style="font-size:15px;color:var(--fg2)">この一打が見合うのは、跳満クラスの聴牌のときです。</span>';
+    }
+    // ★形を崩したかは、目盛りとは別に注記する
+    if (v.breaks && !v.safeish) {
+      headline += '<br><span style="font-size:15px;color:var(--bad)">しかも形が崩れます（牌効率だけなら ' + T.label(q.effBest.tile) + ' 切り）。降りるなら安全側の牌、押すなら形を残す牌があります。</span>';
+    }
+    var top = document.createElement('div');
+    top.style.cssText = 'display:flex;gap:22px;align-items:center';
+    top.appendChild(tileSpan(picked, 1.6, 'picked'));
+    top.appendChild(el('<div><div class="verdict" style="color:' + meta.color + '">' + meta.label + '</div>' +
+      '<div style="margin-top:4px">' + headline + '</div></div>'));
+    c.appendChild(top);
+
+    // ★目盛りはボタン。押すと、その勝負になる牌が見える
+    var groups = {};
+    q.options.forEach(function (o) {
+      var j = B.judge(q, o.tile);
+      (groups[j.key] = groups[j.key] || []).push({ o: o, j: j });
+    });
+    var sc = document.createElement('div');
+    sc.className = 'scale';
+    var listBox = el('<div class="stancelist" hidden></div>');
+    var openKey = null;
+    // 「当たる形」の欄は、後で牌を押すと切り替わる
+    var waysBox = document.createElement('div');
+    function jumpWays(o) { renderWays(o); waysBox.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    STEP_KEYS.forEach(function (k) {
+      var m = STANCE[k];
+      var d = el('<div><button type="button">' + m.label +
+        '<span style="display:block;font-size:11px;opacity:.75">' + (groups[k] ? groups[k].length + '枚' : '—') + '</span></button></div>');
+      if (k === v.key) { d.style.background = m.bg; d.style.color = m.color; d.style.fontWeight = '600'; }
+      d.querySelector('button').onclick = function () {
+        if (openKey === k) { listBox.hidden = true; openKey = null; return; }
+        openKey = k;
+        listBox.hidden = false;
+        listBox.innerHTML = '';
+        listBox.appendChild(el('<div style="font-size:14px;color:' + m.color + ';font-weight:600;margin-bottom:2px">' + m.label + 'になる牌</div>'));
+        listBox.appendChild(el('<div class="note" style="margin:0 0 8px">' + m.desc + '。牌を押すと、下の「当たる形」がその牌に切り替わります。</div>'));
+        if (!groups[k]) { listBox.appendChild(el('<div class="note" style="margin:0">この手牌にはありません。</div>')); return; }
+        var rw = el('<div class="row" style="gap:10px"></div>');
+        groups[k].forEach(function (g) {
+          var w = el('<button type="button" class="tilebtn" style="text-align:center;transition:none"></button>');
+          w.innerHTML = T.svg(g.o.tile, { size: 0.95 });
+          w.appendChild(el('<div style="font-size:12.5px;color:var(--fg2);margin-top:3px">' + g.o.hits.toLocaleString() + '回</div>'));
+          w.onclick = function () { jumpWays(g.o); };
+          rw.appendChild(w);
+        });
+        listBox.appendChild(rw);
+      };
+      sc.appendChild(d);
+    });
+    c.appendChild(sc);
+    c.appendChild(listBox);
+    c.appendChild(el('<div class="note" style="margin-top:-12px">' + meta.desc + '。' +
+      '目盛りは<b>どれくらいの危険を取ったか</b>を示すもので、良し悪しの判定ではありません。押すと、その段の牌が見えます。</div>'));
+
+    // ★河と手牌を再掲する。これが無いと振り返れない
+    c.appendChild(el('<div class="sect">局面</div>'));
+    c.appendChild(situationLine(q));
+    c.appendChild(riverBlock(q, true));
+    var os2 = otherSeen(q, true); if (os2) c.appendChild(os2);
+    if (q.options.some(function (o) { return seenBadge(q, o.tile) >= 3; }) ||
+        q.river.some(function (t) { return seenBadge(q, t) >= 3; })) {
+      c.appendChild(el('<div class="note" style="margin-top:6px">牌の右上の数字は、場に見えている枚数（自分の手牌も含む）。' +
+        '<span style="color:#b3392a;font-weight:600">赤の4</span>＝壁、<span style="color:#5b3fa6;font-weight:600">紫の3</span>＝ワンチャンス。</div>'));
+    }
+    c.appendChild(el('<div class="sect">手牌と、それぞれの放銃回数（' + q.samples.toLocaleString() + '回中）</div>'));
+    c.appendChild(handWithCounts(q, picked, jumpWays));
+    c.appendChild(el('<div class="note" style="margin-top:6px">金の枠があなた、緑が最も安全、赤が最も危険。牌を押すと、その牌の「当たる形」が下に出ます。</div>'));
+
+    // 3枚比較
+    c.appendChild(el('<div class="sect">放銃した回数</div>'));
+    var rows = [];
+    rows.push({ tile: s.tile, lab: mine.tile === s.tile ? '最も安全（あなた）' : '最も安全', v: s.hits, col: 'var(--ok)', text: s.hits.toLocaleString() });
+    if (mine.tile !== s.tile && mine.tile !== r.tile) rows.push({ tile: mine.tile, lab: 'あなた', v: mine.hits, col: 'var(--warn)', text: mine.hits.toLocaleString() });
+    if (r.tile !== s.tile) rows.push({ tile: r.tile, lab: mine.tile === r.tile ? '最も危険（あなた）' : '最も危険', v: r.hits, col: 'var(--bad)', text: r.hits.toLocaleString() });
+    c.appendChild(bars(rows));
+
+    // ★当たる形。牌を押すと切り替わる。河の牌が残した形は、捨て牌も並べて「4 45」の形で見せる
+    function renderWays(target) {
+      waysBox.innerHTML = '';
+      var j = B.judge(q, target.tile), sm = STANCE[j.key];
+      var tags = document.createElement('div');
+      tags.style.margin = '0 0 10px';
+      tags.appendChild(el('<span class="tag" style="background:' + sm.bg + ';color:' + sm.color + '">' + sm.label + '</span>'));
+      target.labels.forEach(function (l) { tags.appendChild(el('<span class="tag ' + l.dir + '">' + l.text + '</span>')); });
+      waysBox.appendChild(el('<div class="sect">' + T.label(target.tile) + 'に当たる形' +
+        '<span style="color:var(--fg3)">（' + target.hits.toLocaleString() + '回' +
+        (target.tile === picked ? '・あなたの一打' : target.tile === s.tile ? '・最も安全' : target.tile === r.tile ? '・最も危険' : '') + '）</span></div>'));
+      waysBox.appendChild(tags);
+
+      var ways = Danger.waysToHit(target.tile, q.ownDiscards, q.visible);
+      var origins = Danger.originsOf(target.tile, q.river, q.ownDiscards);
+      var deadCount = 0;
+      ways.forEach(function (o) {
+        if (o.dead !== null) deadCount++;
+        var origin = null;
+        for (var i = 0; i < origins.length; i++) {
+          if (origins[i].name !== 'カンチャン' && origins[i].name !== 'ペンチャン' && sameSet(origins[i].kept, o.kept)) { origin = origins[i]; break; }
+        }
+        waysBox.appendChild(shapeLine(o, origin, q));
+      });
+      var isHonor = target.tile >= 27;
+      waysBox.appendChild(el('<div class="note" style="margin-top:8px">' + ways.length + '通りのうち <b>' + deadCount + '通り</b> が河で消えています。' +
+        (deadCount === 0 && !isHonor ? ' 1つも消えていないので、これを<b>完全無筋</b>と呼びます。' : '') +
+        (isHonor ? ' 字牌はシャンポンと単騎でしか当たりません。残り枚数がすべてです。' +
+          '<br><span style="color:var(--bad)">★ただし相手がチャンタや染め手（字牌を使う手）なら別。河に中張牌が早くから並んでいたら疑ってください。</span>' : '') + '</div>'));
+
+      // ★壁・ワンチャンスは、何が何枚見えていて、どの形が消えたかを文章にする（2026-09-11 指摘）
+      var isEdge = false;
+      var wallDead = ways.filter(function (o) { return o.deadBy === 'wall'; });
+      var thinKept = [], thinForms = [], fullForms = [], sujiDead = [];
+      ways.forEach(function (o) {
+        if (isEdge || o.type === '単騎' || o.type === 'シャンポン') return;
+        if (o.dead !== null) { if (o.deadBy === 'furiten') sujiDead.push(o); return; }
+        var thin = o.kept.filter(function (k) { return q.visible[k] === 3; });
+        if (thin.length) { thinForms.push(o); thin.forEach(function (k) { if (thinKept.indexOf(k) < 0) thinKept.push(k); }); }
+        else fullForms.push(o);
+      });
+      if (wallDead.length) {
+        var wl = wallDead.map(function (o) { return T.label(o.dead) + 'が4枚見えているので ' + o.kept.map(T.label).join('') + ' の形'; });
+        waysBox.appendChild(el('<div class="callout ok"><b>壁。</b>' + wl.join('、') + 'は作れません。' +
+          'その分、この牌は当たりにくくなっています（' + target.hits.toLocaleString() + '回）。' +
+          (wallDead.length === ways.filter(function (o) { return o.type !== '単騎' && o.type !== 'シャンポン'; }).length
+            ? '<br>リャンメンもカンチャンも全部消えたので<b>ノーチャンス</b>。残るのは単騎とシャンポンだけです。' : '') + '</div>'));
+      } else if (thinKept.length) {
+        var thinTxt = thinKept.map(T.label).join('・') + 'が3枚見えているので、' +
+          thinForms.map(function (o) { return o.kept.map(T.label).join(''); }).join('・') + ' の形は残り1枚でしか作れません。';
+        if (!fullForms.length && sujiDead.length) {
+          // ★スジとワンチャンスの複合。片側はスジで消え、残る側は残り1枚
+          waysBox.appendChild(el('<div class="callout ok"><b>スジとワンチャンスの複合。</b>' +
+            sujiDead.map(function (o) { return T.label(o.dead) + 'が河にあるので ' + o.kept.map(T.label).join('') + ' は消え'; }).join('、') + '、' +
+            '残る側は' + thinTxt + 'つまりリャンメンでは<b>ほぼ当たらない</b>牌になっています（' + target.hits.toLocaleString() + '回）。' +
+            '<br><span style="font-size:13.5px;color:var(--fg2)">ワンチャンスが効くのは、こうして<b>もう片側がスジで消えているとき</b>です。</span></div>'));
+        } else if (!fullForms.length) {
+          waysBox.appendChild(el('<div class="callout ok"><b>ワンチャンス。</b>' + thinTxt +
+            'リャンメン・カンチャンが全部その形なので、この牌は低めに出ています（' + target.hits.toLocaleString() + '回）。</div>'));
+        } else {
+          waysBox.appendChild(el('<div class="callout warn"><b>ワンチャンスですが、効きは薄い。</b>' + thinTxt +
+            'ただし ' + fullForms.map(function (o) { return o.kept.map(T.label).join(''); }).join('・') + ' の形はそのまま生きているので、' +
+            '安全牌としては使えません（' + target.hits.toLocaleString() + '回）。' +
+            '<br><span style="font-size:13.5px;color:var(--fg2)">ワンチャンスは、もう片側がスジで消えていて初めて効きます。</span></div>'));
+        }
+      }
+      // ★無筋の端牌は、中張牌の無筋と比べて見せる。それしか切れない場面がある
+      var tn = target.tile < 27 ? target.tile % 9 : -1;
+      if ((tn === 0 || tn === 8) && target.labels.some(function (l) { return l.text === '完全無筋'; })) {
+        var midMusuji = q.options.filter(function (o) {
+          var m = o.tile < 27 ? o.tile % 9 : -1;
+          return m >= 2 && m <= 6 && o.labels.some(function (l) { return l.text === '完全無筋'; });
+        });
+        var mm = midMusuji.length ? Math.round(midMusuji.reduce(function (a, o) { return a + o.hits; }, 0) / midMusuji.length) : null;
+        waysBox.appendChild(el('<div class="callout ok">無筋ですが<b>端牌</b>です。当たる形はリャンメン1本・単騎・シャンポンの' + ways.length + '通りで、' +
+          '中張牌の5通りより少ない。この局面でも ' + target.hits.toLocaleString() + '回' +
+          (mm !== null ? '（中張牌の無筋は平均 ' + mm.toLocaleString() + '回）' : '') + '。' +
+          '<br><span style="font-size:13.5px;color:var(--fg2)">無筋しか切れないときは、端牌から。</span>' +
+          '<br><span style="font-size:13.5px;color:var(--bad)">★ただし相手がチャンタや染め手なら逆で、端牌と字牌がいちばん危険になります。河に中張牌が早くから並んでいたら疑ってください（手役読みコース）。</span></div>'));
+      }
+      // ★序盤の捨て牌に由来するまたぎ筋・裏筋は、完全無筋の平均と比べて見せる
+      var earlyOrg = origins.filter(function (o) { return o.turn <= 3 && (o.name === 'またぎ筋' || o.name === '裏筋'); });
+      if (earlyOrg.length) {
+        var musuji = q.options.filter(function (o) { return o.labels.some(function (l) { return l.text === '完全無筋'; }); });
+        var mAvg = musuji.length ? musuji.reduce(function (a, o) { return a + o.hits; }, 0) / musuji.length : null;
+        var eo = earlyOrg[0];
+        waysBox.appendChild(el('<div class="callout ok">' + eo.name + 'ですが、' + eo.turn + '巡目という<b>序盤</b>に切られた' + T.label(eo.discard) + 'の形です。' +
+          '序盤に切った牌の周辺は手に残っていにくいので、この計算でも ' + target.hits.toLocaleString() + '回' +
+          (mAvg !== null ? '（この手の完全無筋の平均 ' + Math.round(mAvg).toLocaleString() + '回）' : '') +
+          (mAvg !== null && target.hits < mAvg ? 'と、無筋より低めに出ています。' : 'です。') +
+          '<br><span style="font-size:13.5px;color:var(--fg2)">中盤以降に手出しされた牌のまたぎ筋とは、危険度が違います。</span></div>'));
+      }
+      if (target.labels.some(function (l) { return l.text.indexOf('スジ') >= 0; })) {
+        waysBox.appendChild(el('<div class="callout warn">スジはリャンメン待ちにしか効きません。' +
+          '<b>カンチャン・ペンチャン・シャンポン・単騎には一切効きません。</b>この牌も、そこからは当たります。</div>'));
+      }
+      if (j.breaks) {
+        waysBox.appendChild(el('<div class="callout ' + (j.safeish ? 'ok' : 'bad') + '">この牌を切ると<b>手の形が崩れます</b>' +
+          '（牌効率だけなら ' + T.label(q.effBest.tile) + ' 切り）。' +
+          (j.safeish ? '安全側の牌なので、降りると決めたならこれで正しい。' : '崩したうえに危険牌です。降りるなら安全側の牌、押すなら形を残す牌があります。') + '</div>'));
+      }
+    }
+    c.appendChild(waysBox);
+    renderWays(mine);
+
+    c.appendChild(allOptionsToggle(q.options.map(function (o) {
+      var isS = o.tile === s.tile, isM = o.tile === mine.tile;
+      var j = B.judge(q, o.tile);
+      return {
+        tile: o.tile,
+        lab: isS ? '最も安全' : isM ? 'あなた' : '',
+        mid: '<span style="color:' + STANCE[j.key].color + '">' + STANCE[j.key].label + '</span>　' +
+          o.labels.map(function (l) { return l.text; }).join('・'),
+        value: o.hits.toLocaleString() + '回',
+        bg: isS ? 'var(--ok-bg)' : (isM ? 'var(--warn-bg)' : '')
+      };
+    }), '同じ局面の中での比較です。巡目や場が違う局面の回数と並べないでください。'));
+
+    c.appendChild(nextButton(afterAnswer));
+    render(c);
+  }
+})();
+
+</script>
+<script id="mod-course-yomi">
+// 手役読みコースの画面。app.html の共通部品を使う
+(function () {
+  'use strict';
+
+  var STAGE_LABEL = { sample: '見本', similar: '類例', judge: '見わけ' };
+  // ★「取り違え」とは言わない。河から手役は断定できないので、可能性の問題として扱う
+  var RESULT = {
+    hit: { label: '正解', color: 'var(--ok)' },
+    falseAlarm: { label: '疑いすぎ', color: 'var(--warn)' },
+    missed: { label: '見逃し', color: 'var(--bad)' },
+    other: { label: '別の手役でした', color: 'var(--warn)' }
+  };
+
+  // ★河は6枚で折り返す。実際の河と同じ並びにしないと、パターンとして覚えられない
+  function riverRack(river, size) {
+    var sz = size || (window.innerWidth < 560 ? 0.72 : 0.95), w = Math.round(T.W * sz), gap = 4;
+    var rk = el('<div class="rack"></div>');
+    var row = el('<div class="river"></div>');
+    row.style.maxWidth = (w * 6 + gap * 5) + 'px';
+    row.style.gap = gap + 'px';
+    river.forEach(function (t) { row.appendChild(tileSpan(t, sz)); });
+    rk.appendChild(row);
+    return rk;
+  }
+
+  window.q3Start = function () {
+    var q = Y.makeQuestion(state.i);
+    state.q = q;
+    var c = el('<div class="card"></div>');
+    c.appendChild(cardHead(STAGE_LABEL[q.stage], dotColors()));
+
+    if (q.stage === 'sample') {
+      c.appendChild(el('<div class="callout ok" style="margin-top:0">これは<b>見本</b>です。' +
+        'まず典型の形を目に入れてください。答えは選んだあとすぐ出ます。</div>'));
+    }
+
+    c.appendChild(el('<div style="font-size:20px;margin:16px 0 10px">この河から、何がいちばん考えられますか</div>'));
+    c.appendChild(riverRack(q.river));
+
+    var box = el('<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px"></div>');
+    Y.ORDER.forEach(function (k) {
+      var b = el('<button class="act">' + Y.KINDS[k].name + '</button>');
+      b.onclick = function () { onPick(k); };
+      box.appendChild(b);
+    });
+    c.appendChild(box);
+    c.appendChild(el('<div class="note">「普通の手」も選択肢です。' +
+      '色が少し偏っただけで警戒すると、安全牌を無駄に抱えて手が潰れます。<br>' +
+      '出てくる順位は<b>このドリルが作る河の中での可能性</b>で、実戦の統計ではありません。</div>'));
+    render(c);
+  };
+
+  function onPick(choice) {
+    var q = state.q, v = Y.judge(q, choice);
+    var meta = RESULT[v.key];
+    pushResult({ key: v.key, color: meta.color });
+    feedback(choice, v);
+  }
+
+  function feedback(choice, v) {
+    var q = state.q;
+    var meta = RESULT[v.key];
+    var c = el('<div class="card"></div>');
+    c.appendChild(cardHead(STAGE_LABEL[q.stage], dotColors()));
+
+    var sub;
+    if (v.key === 'hit') sub = 'この河は <b>' + Y.KINDS[q.answer].short + '</b> でした。';
+    else if (v.key === 'other') sub = 'この河は <b>' + Y.KINDS[q.answer].short + '</b> でした。' + Y.KINDS[choice].short + 'の可能性も' +
+      (v.rank <= 2 ? 'ありました（可能性の順で' + v.rank + '番目）。' : '無くはありませんが、順位は' + v.rank + '番目です。');
+    else if (v.key === 'missed') sub = 'この河は <b>' + Y.KINDS[q.answer].short + '</b> でした。警戒しないと、安全牌の順番を取り違えます。';
+    else sub = 'この河は <b>普通の手</b> でした。' + Y.KINDS[choice].short + 'に見えましたが、いつもの安全度で大丈夫です。';
+
+    c.appendChild(el('<div><div class="verdict" style="color:' + meta.color + '">' + meta.label + '</div>' +
+      '<div style="margin-top:4px;font-size:17px">' + sub + '</div></div>'));
+
+    // ★可能性の順。断定しない。順番だけを主役にし、数字はトグルの中（2026-09-12 指摘）。
+    //   半分以上の問題で1位が90%を超え、棒グラフが「100%対0%」の断定に見えていた
+    function rankLine(list, showAns) {
+      var line = el('<div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 0;margin:4px 0 6px"></div>');
+      list.forEach(function (r, i) {
+        var isAns = showAns && r.kind === q.answer, isMine = r.kind === choice;
+        var item = el('<span style="display:inline-flex;align-items:baseline;gap:6px"></span>');
+        if (i > 0) item.appendChild(el('<span style="color:var(--fg3);margin:0 10px">›</span>'));
+        var nm = el('<span></span>');
+        nm.style.cssText = i === 0
+          ? 'font-family:var(--mincho);font-size:22px;font-weight:600'
+          : 'font-size:16px;color:' + (i === 1 ? 'var(--fg)' : 'var(--fg2)');
+        nm.textContent = (i + 1) + '. ' + Y.KINDS[r.kind].short;
+        item.appendChild(nm);
+        if (isAns) item.appendChild(el('<span style="color:var(--ok)">●</span>'));
+        if (isMine) item.appendChild(el('<span style="color:var(--warn);font-size:13px">あなた</span>'));
+        line.appendChild(item);
+      });
+      return line;
+    }
+    function numRows(list, title) {
+      var box = document.createElement('div');
+      box.appendChild(el('<div style="font-size:14px;color:var(--fg2);margin:10px 0 4px">' + title + '</div>'));
+      list.forEach(function (r, i) {
+        var isAns = r.kind === q.answer;
+        var line = el('<div class="cmp" style="margin-bottom:6px"></div>');
+        line.appendChild(el('<span class="lab" style="width:130px">' + (i + 1) + '. ' + Y.KINDS[r.kind].short +
+          (isAns ? ' <span style="color:var(--ok)">●</span>' : '') + '</span>'));
+        var tr = el('<div class="track" style="height:14px"></div>');
+        var fl = el('<div class="fill"></div>');
+        fl.style.width = Math.max(1, Math.round(r.p * 100)) + '%';   // ★絶対値。相対にすると1位が常に満タンになる
+        fl.style.background = isAns ? 'var(--ok)' : 'var(--fg3)';
+        fl.style.opacity = '.6';
+        tr.appendChild(fl); line.appendChild(tr);
+        line.appendChild(el('<span class="num">' + (r.p * 100 < 1 ? '<1' : Math.round(r.p * 100)) + '%</span>'));
+        box.appendChild(line);
+      });
+      return box;
+    }
+
+    c.appendChild(el('<div class="sect">この河から考えられる可能性の順</div>'));
+    c.appendChild(rankLine(q.ranking, true));
+    c.appendChild(el('<div class="note" style="margin-top:2px">緑の●が実際の手。' +
+      '「河の形がどれに近いか」の順で、このドリルが作る河を各種220本ずつ用意して比べたものです。</div>'));
+
+    // ★実戦での目安。公開されている役の出現率を事前確率として掛ける
+    c.appendChild(el('<div class="sect">実戦での目安（手役の出現率を織り込んだ順）</div>'));
+    c.appendChild(rankLine(q.posterior, true));
+    c.appendChild(el('<div class="note" style="margin-top:2px">実戦では和了の約9割が普通の手で、染め手は約7%、チートイは約2%、チャンタは約1%（天鳳の役統計）。' +
+      'その割合を上の「河の近さ」に掛けた順です。<b>はっきりした河でないと、手役の可能性は思ったほど上がりません。</b>' +
+      '河の形の読み（上）と、実際にどれくらい疑うか（ここ）は、分けて覚えてください。</div>'));
+
+    var numBtn = el('<button class="act sm" style="margin-top:10px">近さの数字を見る</button>');
+    var numBox = document.createElement('div');
+    numBox.hidden = true;
+    numBox.appendChild(numRows(q.ranking, '河の形の近さ'));
+    numBox.appendChild(numRows(q.posterior, '実戦での目安'));
+    numBox.appendChild(el('<div class="note">数字は「その順位がどれくらいはっきりしているか」の目安です。90%台なら、ほぼその手。50〜60%台なら2位も同じくらい疑ってください。</div>'));
+    numBtn.onclick = function () { numBox.hidden = !numBox.hidden; numBtn.textContent = numBox.hidden ? '近さの数字を見る' : '数字を閉じる'; };
+    c.appendChild(numBtn);
+    c.appendChild(numBox);
+
+    c.appendChild(el('<div class="sect">河</div>'));
+    c.appendChild(riverRack(q.river));
+    c.appendChild(el('<div class="callout ' + (v.key === 'hit' ? 'ok' : 'warn') + '">' + Y.why(q) + '</div>'));
+
+    // ★根拠は数字で出す
+    c.appendChild(el('<div class="sect">河から数えられること</div>'));
+    var tbl = document.createElement('div');
+    Y.evidence(q).forEach(function (e) {
+      tbl.appendChild(el('<div style="display:flex;gap:14px;padding:5px 0;border-bottom:1px solid var(--hair)">' +
+        '<span style="width:190px;flex:none;color:var(--fg2);font-size:14.5px">' + e.k + '</span>' +
+        '<span style="font-size:15.5px">' + e.v + '</span></div>'));
+    });
+    c.appendChild(tbl);
+
+    if (q.answer === 'chiitoi') {
+      c.appendChild(el('<div class="callout warn">チートイの待ちは<b>必ず単騎</b>です。スジもまたぎ筋も裏筋も効きません。' +
+        '効くのは<b>その牌が何枚見えているか</b>だけ。3枚見えていれば安全、1枚も見えていなければ危険です。</div>'));
+    }
+    if (q.answer === 'honitsu' || q.answer === 'chanta') {
+      c.appendChild(el('<div class="callout warn">この手が相手だと、<b>安全牌の順番が入れ替わります。</b>' +
+        '字牌と1・9牌が安全なのは、相手が普通の手のときだけです。</div>'));
+    }
+    if (q.answer === 'normal') {
+      c.appendChild(el('<div class="callout ok">普通の手（タンピン系）が相手なら、当たり牌は<b>中張牌</b>に寄ります。' +
+        '字牌と1・9牌が安全、というふだんの物差しがそのまま使えます。</div>'));
+    }
+
+    c.appendChild(nextButton(afterAnswer));
+    render(c);
+  }
+})();
+
+</script>
+<script>screenStart();</script>
+</body>
+</html>
