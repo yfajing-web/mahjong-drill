@@ -1214,8 +1214,10 @@
   // 牌 t に当たる形のうち、河の牌 d に由来するものを返す
   function originsOf(t, river, ownDiscards) {
     var out = [];
-    // ★端牌（1・9）にまたぎ筋・裏筋は無い（2026-09-11 指摘）
-    if (t >= 27 || numOf(t) === 0 || numOf(t) === 8) return out;
+    if (t >= 27) return out;
+    // ★端牌の「捨て牌」からはまたぎ筋が出ない（12・89 はペンチャン → shapesFrom で名前が変わる）。
+    //   一方、端牌が「待ち」になる形（8切りの 78 → 6-9）はまたぎ筋・裏筋と呼ぶ。
+    //   最初は待ち側の端牌も除外していて、9が「無筋の端牌」としか説明されなかった（2026-09-12 指摘）
     for (var i = 0; i < river.length; i++) {
       var d = river[i];
       var sh = shapesFrom(d, ownDiscards);
@@ -2979,8 +2981,10 @@ function screenSummary() {
         waysBox.appendChild(shapeLine(o, origin, q));
       });
       var isHonor = target.tile >= 27;
+      // ★またぎ筋・裏筋に当たる牌は「完全無筋」と呼ばない（ラベルの側と揃える。2026-09-12）
+      var hasOrg = origins.some(function (o) { return o.name === 'またぎ筋' || o.name === '裏筋'; });
       waysBox.appendChild(el('<div class="note" style="margin-top:8px">' + ways.length + '通りのうち <b>' + deadCount + '通り</b> が河で消えています。' +
-        (deadCount === 0 && !isHonor ? ' 1つも消えていないので、これを<b>完全無筋</b>と呼びます。' : '') +
+        (deadCount === 0 && !isHonor ? (hasOrg ? ' 1つも消えていない無筋で、しかもまたぎ筋・裏筋にあたります。' : ' 1つも消えていないので、これを<b>完全無筋</b>と呼びます。') : '') +
         (isHonor ? ' 字牌はシャンポンと単騎でしか当たりません。残り枚数がすべてです。' +
           '<br><span style="color:var(--bad)">★ただし相手がチャンタや染め手（字牌を使う手）なら別。河に中張牌が早くから並んでいたら疑ってください。</span>' : '') + '</div>'));
 
@@ -3020,17 +3024,29 @@ function screenSummary() {
             '<br><span style="font-size:13.5px;color:var(--fg2)">ワンチャンスは、もう片側がスジで消えていて初めて効きます。</span></div>'));
         }
       }
-      // ★無筋の端牌は、中張牌の無筋と比べて見せる。それしか切れない場面がある
+      // ★無筋の端牌は、中張牌の無筋と比べて見せる。それしか切れない場面がある。
+      //   またぎ筋・裏筋に該当する端牌も同じ注記を出す。ただし「またぎ筋ではある」と先に言う（2026-09-12 指摘）。
+      //   端牌だから当たりにくい、で終わると「またぎ筋ではない」と読まれる
       var tn = target.tile < 27 ? target.tile % 9 : -1;
-      if ((tn === 0 || tn === 8) && target.labels.some(function (l) { return l.text === '完全無筋'; })) {
-        var midMusuji = q.options.filter(function (o) {
+      var edgeOrg = origins.filter(function (o) { return o.name === 'またぎ筋' || o.name === '裏筋'; });
+      var isMusuji = target.labels.some(function (l) { return l.text === '完全無筋'; });
+      if ((tn === 0 || tn === 8) && (isMusuji || edgeOrg.length)) {
+        // 比べる相手: 同じ由来（またぎ筋・裏筋）の中張牌。無ければ中張牌の無筋
+        var midSame = q.options.filter(function (o) {
           var m = o.tile < 27 ? o.tile % 9 : -1;
-          return m >= 2 && m <= 6 && o.labels.some(function (l) { return l.text === '完全無筋'; });
+          if (m < 2 || m > 6) return false;
+          return edgeOrg.length
+            ? o.labels.some(function (l) { return l.text.indexOf('またぎ筋') === 0 || l.text.indexOf('裏筋') === 0; })
+            : o.labels.some(function (l) { return l.text === '完全無筋'; });
         });
-        var mm = midMusuji.length ? Math.round(midMusuji.reduce(function (a, o) { return a + o.hits; }, 0) / midMusuji.length) : null;
-        waysBox.appendChild(el('<div class="callout ok">無筋ですが<b>端牌</b>です。当たる形はリャンメン1本・単騎・シャンポンの' + ways.length + '通りで、' +
+        var mm = midSame.length ? Math.round(midSame.reduce(function (a, o) { return a + o.hits; }, 0) / midSame.length) : null;
+        var head = edgeOrg.length
+          ? edgeOrg.map(function (o) { return o.turn + '巡目の' + T.label(o.discard) + 'の<b>' + o.name + '</b>'; }).join('・') + 'に当たります。ただし<b>端牌</b>なので確率は下がります。'
+          : '無筋ですが<b>端牌</b>です。';
+        var cmp = edgeOrg.length ? '同じまたぎ筋・裏筋の中張牌は平均 ' : '中張牌の無筋は平均 ';
+        waysBox.appendChild(el('<div class="callout ok">' + head + '当たる形はリャンメン1本・単騎・シャンポンの' + ways.length + '通りで、' +
           '中張牌の5通りより少ない。この局面でも ' + target.hits.toLocaleString() + '回' +
-          (mm !== null ? '（中張牌の無筋は平均 ' + mm.toLocaleString() + '回）' : '') + '。' +
+          (mm !== null ? '（' + cmp + mm.toLocaleString() + '回）' : '') + '。' +
           '<br><span style="font-size:13.5px;color:var(--fg2)">無筋しか切れないときは、端牌から。</span>' +
           '<br><span style="font-size:13.5px;color:var(--bad)">★ただし相手がチャンタや染め手なら逆で、端牌と字牌がいちばん危険になります。河に中張牌が早くから並んでいたら疑ってください（手役読みコース）。</span></div>'));
       }
